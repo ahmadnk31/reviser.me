@@ -114,7 +114,7 @@ export interface Question {
     }
   }
   
-  export function extractJsonFromString(str: string): string {
+function extractJsonFromString(str: string): string {
     try {
       // Find JSON-like content between curly braces
       const jsonRegex = /{[\s\S]*}/;
