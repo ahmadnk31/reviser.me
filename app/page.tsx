@@ -166,7 +166,7 @@ export default function Home() {
           </div>
           <div className="mt-12 pt-8 border-t">
             <p className="text-center text-muted-foreground">
-              © {new Date().getFullYear()} Flashcard Master. All rights reserved.
+              © {new Date().getFullYear()} Reviser. All rights reserved.
             </p>
           </div>
         </div>
