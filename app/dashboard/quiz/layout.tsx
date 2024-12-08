@@ -14,6 +14,8 @@ export default async function GeneratorPage({children}:{
         )
     }
     return(
+       <>
         {children}
+       </>
     )
 }

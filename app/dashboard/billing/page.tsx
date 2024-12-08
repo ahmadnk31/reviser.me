@@ -6,24 +6,25 @@ import { BillingForm } from '@/components/billing/billing-form'
 export default async function BillingPage() {
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore)
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user?.id) {
     redirect('/login')
   }
-
-  const { data: subscription } = await supabase
+  console.log(`user: ${user?.id}`)
+  const { data: subscriptions } = await supabase
     .from('subscriptions')
     .select('*')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
+    .is('canceled_at', null)
     .single()
-
+    console.log(`subscription: ${subscriptions}`)
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold mb-6">Billing Management</h1>
       <BillingForm
-        subscription={subscription}
-        userEmail={session.user.email!}
+        subscription={subscriptions}
+        userEmail={user.email!}
       />
     </div>
   )

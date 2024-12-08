@@ -22,13 +22,8 @@ export async function POST(req: Request) {
   const cookieStore=cookies()
   const supabase= createClient(cookieStore)
   const {data: {user}}=await supabase.auth.getUser()
-  if(!user){
-    return NextResponse.json({error: "Authentication required"}, {status: 401})
-  }
-  const {data:subscription_status}=await supabase.from("users").select("subscription_status").eq("id",user?.id).single()
-  if(subscription_status?.subscription_status!=="active"){
-    return NextResponse.json({error: "Subscription inactive"}, {status: 401})
-  }
+  
+  
   const embeddings = new OpenAIEmbeddings({
     model: "text-embedding-3-small",
     apiKey: process.env.OPENAI_API_KEY,

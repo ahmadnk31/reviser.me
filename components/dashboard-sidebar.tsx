@@ -86,9 +86,9 @@ export function AppSidebar() {
         async function fetchSubscriptionStatus() {
             if(userId){
               try {
-                const { data, error } = await supabase.from('subscriptions').select('status').eq('user_id', userId).single()
+                const { data, error } = await supabase.from('users').select('subscription_status').eq('id', userId).single()
                 if (error) throw error
-                setSubscriptionStatus(data.status)
+                setSubscriptionStatus(data.subscription_status)
             } catch (error) {
                 console.log('Error fetching subscription status:', error)
             }
@@ -96,7 +96,7 @@ export function AppSidebar() {
         }
         fetchSubscriptionStatus()
     }, [user])
-    console.log(subscriptionStatus)
+    console.log(`subscriptionStatus: ${subscriptionStatus}`)
   return (
     <>
      <UpgradeModal

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,19 +21,23 @@ export function AIGenerator({ onFlashcardsGenerated }: AIGeneratorProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const supabase = createClient();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (user === null) {
+        return;
+      }
+      const { data: subscription_status } = await supabase.from('users').select('subscription_status').eq('id', user.user?.id).single();
+      setSubscriptionStatus(subscription_status?.subscription_status);
+    };
+    fetchSubscriptionStatus();
+  }, []);
   const handleGenerate = async () => {
     const trimmedTopic = topic.trim();
     
-    const {data:{user}} = await supabase.auth.getUser();
-    if(user === null){
-      toast({
-        title: "Login Required",
-        description: "Please login to generate flashcards.",
-        variant: "destructive",
-      });
-      return;
-    }
-    const {data:subscription_status}=await supabase.from('users').select('subscription_status').eq('id',user.id).single();
+   
+    
     
     if (!trimmedTopic) {
       toast({
@@ -46,7 +50,7 @@ export function AIGenerator({ onFlashcardsGenerated }: AIGeneratorProps) {
 
     setLoading(true);
     try {
-      if(subscription_status?.subscription_status!=="active"){
+      if(subscriptionStatus!=="active"){
         return(
           toast(
           {

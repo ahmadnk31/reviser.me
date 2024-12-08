@@ -1,83 +1,85 @@
-"use client"
+'use client'
 
 import { useState } from 'react'
-import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js'
+import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js'
 import { Button } from '@/components/ui/button'
 
-type SubscriptionFormProps = {
-  email: string
+interface StripePaymentFormProps {
   priceId: string
-  subscription_type: string
+  subscriptionType: string
   onSubscriptionComplete: (subscriptionId: string, status: string) => void
 }
 
-export function SubscriptionForm({ email, priceId, onSubscriptionComplete,subscription_type }: SubscriptionFormProps) {
+export function StripePaymentForm({
+  priceId,
+  subscriptionType,
+  onSubscriptionComplete
+}: StripePaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [processing, setProcessing] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!stripe || !elements) return
 
-    setIsLoading(true)
-    setError(null)
+    if (!stripe || !elements) {
+      return
+    }
+
+    setProcessing(true)
 
     try {
-      const cardElement = elements.getElement(CardElement)
-      if (!cardElement) throw new Error("Card element not found")
-
-      const { error: cardError, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
+      const result = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/payment-success`,
+        },
+        redirect: 'if_required',
       })
 
-      if (cardError) throw cardError
+      if (result.error) {
+        throw new Error(result.error.message || 'An error occurred during payment.')
+      }
 
-      const response = await fetch('/api/create-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          paymentMethodId: paymentMethod.id,
-          priceId,
-            subscription_type
-        }),
-      })
+      if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+        // Create subscription
+        const subscriptionResponse = await fetch('/api/create-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paymentIntentId: result.paymentIntent.id,
+            priceId,
+            subscription_type: subscriptionType,
+          }),
+        })
 
-      const { subscriptionId, clientSecret, status, dbSubscription, error: serverError } = await response.json()
-      if (serverError) throw new Error(serverError)
-
-      if (status === 'incomplete') {
-        if (!clientSecret) throw new Error("No client secret returned from the server")
-
-        const { error: confirmationError, paymentIntent } = await stripe.confirmCardPayment(clientSecret)
-        if (confirmationError) throw confirmationError
-
-        if (paymentIntent.status === 'succeeded') {
-          onSubscriptionComplete(subscriptionId, 'active')
-        } else {
-          onSubscriptionComplete(subscriptionId, 'incomplete')
+        if (!subscriptionResponse.ok) {
+          throw new Error('Failed to create subscription')
         }
-      } else if (status === 'active') {
+
+        const { subscriptionId, status } = await subscriptionResponse.json()
         onSubscriptionComplete(subscriptionId, status)
       } else {
-        throw new Error(`Unexpected subscription status: ${status}`)
+        throw new Error('Payment was not successful')
       }
-    } catch (err: any) {
-      setError(err.message || "An error occurred during the subscription process.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
-      setIsLoading(false)
+      setProcessing(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <CardElement className="p-3 border rounded-md" />
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      <Button type="submit" disabled={isLoading} className="w-full">
-        {isLoading ? 'Processing...' : 'Subscribe'}
+    <form onSubmit={handleSubmit}>
+      <PaymentElement options={{ layout: 'tabs' }} />
+      {error && <div className="text-red-500 mt-2">{error}</div>}
+      <Button
+        type="submit"
+        disabled={!stripe || !elements || processing}
+        className="mt-4"
+      >
+        {processing ? 'Processing...' : 'Subscribe'}
       </Button>
     </form>
   )

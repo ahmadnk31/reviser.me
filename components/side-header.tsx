@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
-import { Brain, Menu } from 'lucide-react'
+import { Brain, Menu, Crown } from 'lucide-react'
 import { ThemeToggle } from "@/components/theme-toggle"
 import {
   DropdownMenu,
@@ -15,9 +15,24 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { FeedbackDialog } from "./feedback-dialog"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { createClient } from "@/lib/supabase/client"
 
 export function SiteHeader() {
   const { user, signOut } = useAuth()
+  const supabase = createClient()
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (user === null) {
+        return;
+      }
+      const { data: subscription_status } = await supabase.from('users').select('subscription_status').eq('id', user.user?.id).single();
+      setSubscriptionStatus(subscription_status?.subscription_status);
+    };
+    fetchSubscriptionStatus();
+  }, []);
 
   const MobileNavItems = () => (
     <>
@@ -56,6 +71,11 @@ export function SiteHeader() {
                         {user.email?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
+                    {subscriptionStatus === 'active' && (
+                      <div className="absolute -top-1 -right-1 bg-primary rounded-full p-0.5">
+                        <Crown className="h-3 w-3 text-background" />
+                      </div>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

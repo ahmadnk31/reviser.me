@@ -24,7 +24,7 @@ export function BillingForm({ subscription, userEmail }: BillingFormProps) {
   }
 
 
-
+console.log(subscription)
   return (
     <Card>
       <CardHeader>
@@ -48,11 +48,12 @@ export function BillingForm({ subscription, userEmail }: BillingFormProps) {
               : 'N/A'}
           </p>
         </div>
+        
         <div>
           <h3 className="text-lg font-medium">Next Invoice</h3>
           <p className="text-sm text-gray-500">
             {subscription
-              ? `${new Date(subscription.current_period_end).toLocaleDateString()} - ${subscription.price} ${subscription.currency}`
+              ? `${new Date(subscription.current_period_end).toLocaleDateString()}`
               : 'N/A'}
           </p>
         </div>

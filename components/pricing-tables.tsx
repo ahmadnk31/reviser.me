@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Check, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useToast } from '@/hooks/use-toast'
-import { useAuth } from '@/components/auth-provider'
+import { UpgradeModal } from './upgrade'
+import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 interface PricingTablesProps {
   billingInterval: 'monthly' | 'yearly'
@@ -21,7 +22,7 @@ const plans = {
         "Community support",
       ],
       buttonText: "Get Started",
-      priceId: null,
+      priceId: 'free',
     },
     {
       name: "Pro",
@@ -63,7 +64,7 @@ const plans = {
         "Community support",
       ],
       buttonText: "Get Started",
-      priceId: null,
+      priceId: 'free',
     },
     {
       name: "Pro",
@@ -98,63 +99,28 @@ const plans = {
 
 export function PricingTables({ billingInterval }: PricingTablesProps) {
   const [loading, setLoading] = useState<string | null>(null)
-  const { toast } = useToast()
-  const { user } = useAuth()
 
-  const handleSubscribe = async (priceId: string | null, planName: string) => {
-    if (!priceId) {
-      window.location.href = '/signup'
-      return
-    }
-
-    if (planName === "Team") {
-      window.location.href = '/contact'
-      return
-    }
-
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to subscribe",
-        variant: "destructive",
-      })
-      window.location.href = '/login'
-      return
-    }
-
-    setLoading(priceId)
-
-    try {
-      const response = await fetch('/api/create-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ priceId }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session')
-      }
-
-      window.location.href = data.url
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to process subscription",
-        variant: "destructive",
-      })
-      setLoading(null)
-    }
-  }
-
+  
+  const supabase = createClient();
+  const [subscription_status, setSubscriptionStatus] = useState<string | null>(null);
   const currentPlans = plans[billingInterval]
-
+  const [openUpgradeModal, setOpenUpgradeModal] = useState(false)
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (user === null) {
+        return;
+      }
+      const { data: subscription_status } = await supabase.from('users').select('subscription_status').eq('id', user.user?.id).single();
+      setSubscriptionStatus(subscription_status?.subscription_status);
+    };
+    fetchSubscriptionStatus();
+  }, []);
   return (
-    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-      {currentPlans.map((plan, index) => (
+    <div>
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <UpgradeModal isOpen={openUpgradeModal} onClose={()=>setOpenUpgradeModal(false)} />
+      {subscription_status!=='active'&&currentPlans.map((plan, index) => (
         <motion.div
           key={plan.name}
           initial={{ opacity: 0, y: 20 }}
@@ -199,7 +165,7 @@ export function PricingTables({ billingInterval }: PricingTablesProps) {
           <Button
             className="w-full"
             variant={plan.name === "Pro" ? "default" : "outline"}
-            onClick={() => handleSubscribe(plan.priceId ?? null, plan.name)}
+            onClick={() => setOpenUpgradeModal(true)}
             disabled={loading === plan.priceId}
           >
             {loading === plan.priceId ? (
@@ -213,6 +179,17 @@ export function PricingTables({ billingInterval }: PricingTablesProps) {
           </Button>
         </motion.div>
       ))}
+      
+    </div>
+    {
+       subscription_status==='active'&&<div className='flex items-center justify-center'>
+        <Link href="/dashboard/billing">
+        <Button>
+          Manange Subscription
+        </Button>
+        </Link>
+        </div>
+      }
     </div>
   )
 }

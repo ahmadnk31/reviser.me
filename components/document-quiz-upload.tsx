@@ -51,7 +51,7 @@ export function FileUploader() {
     const fileName = generateFileNameFromTimestamp(files[0])
     formData.append('fileName', fileName)
     try {
-        const response = await fetch('/dashboard/api/upload', {
+        const response = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
         })
@@ -67,7 +67,7 @@ export function FileUploader() {
           throw new Error('Upload failed')
         }
         if(response.ok){
-          router.push('/quiz/chats')
+          router.push('/dashboard/quiz/chats')
           toast.success('File uploaded successfully')
         }
         const result = await response.json()

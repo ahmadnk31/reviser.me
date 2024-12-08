@@ -62,7 +62,7 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
             <Eye className="mr-2 size-4" />
             Open PDF</Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="max-w-4xl">
+      <AlertDialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle>PDF Viewer</AlertDialogTitle>
         </AlertDialogHeader>

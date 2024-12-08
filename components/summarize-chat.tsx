@@ -64,7 +64,7 @@ export default function SummarizeChat({ onOpen, isOpen, id }: ChatPDFProps) {
 
     return (
         <AlertDialog open={isOpen} onOpenChange={onOpen}>
-            <AlertDialogContent className='overflow-y-auto'>
+            <AlertDialogContent className='overflow-y-auto max-h-[80vh]'>
                 <AlertDialogHeader className='relative'>
                     <AlertDialogTitle>Summarize Document</AlertDialogTitle>
 
