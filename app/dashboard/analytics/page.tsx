@@ -119,11 +119,11 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen container bg-background">
         
         <div className="flex">
          
-          <main className="flex-1 p-8">
+          <main className="flex-1">
             <div className="animate-pulse space-y-4">
               <div className="h-8 w-64 bg-muted rounded"></div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

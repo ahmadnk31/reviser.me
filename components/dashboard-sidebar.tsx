@@ -105,14 +105,14 @@ export function AppSidebar() {
             userEmail={user}
          /> 
     <Sidebar className="bg-background pt-14">
-      <SidebarContent className="bg-background">
+      <SidebarContent className="bg-background p-1 overflow-y-auto">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem  key={item.title}>
                   <SidebarMenuButton className={cn(
-                    "flex items-center hover:bg-accent",
+                    "flex items-center hover:bg-accent text-xl md:text-base",
                     pathname===item.href ? "text-primary" : "text-muted-foreground"
                   )} asChild>
                     <a href={item.href}>
@@ -128,7 +128,7 @@ export function AppSidebar() {
       </SidebarContent>
       {
         subscriptionStatus!=='active' && (
-          <SidebarFooter className="bg-background">
+          <SidebarFooter className="bg-background p-4">
         <Button
           className="w-full"
           onClick={() => setOpen(true)}

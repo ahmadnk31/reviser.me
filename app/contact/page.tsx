@@ -5,7 +5,7 @@ import { Brain, Mail, MessageSquare, Phone } from "lucide-react"
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen cotanienr bg-background">
       <main className="container py-12">
         <div className="grid gap-12 lg:grid-cols-2">
           <div>

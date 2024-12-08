@@ -32,7 +32,7 @@ export function BillingForm({ subscription, userEmail }: BillingFormProps) {
         <CardDescription>Manage your subscription and billing information</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-       {subscription.status === 'active' ? (
+       {subscription?.status === 'active' ? (
         <>
          <div>
           <h3 className="text-lg font-medium">Current Plan</h3>
@@ -72,7 +72,7 @@ export function BillingForm({ subscription, userEmail }: BillingFormProps) {
        )}
       </CardContent>
       {
-        subscription.status==='active'&&(
+        subscription?.status==='active'&&(
             <>
             <CardFooter className="flex justify-between">
         <Button

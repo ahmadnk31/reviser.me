@@ -99,9 +99,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen container bg-background">
       <div className="flex">
-        <main className="flex-1 p-8">
+        <main className="flex-1">
           <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
           <Tabs defaultValue="account" className="space-y-4">

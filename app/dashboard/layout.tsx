@@ -14,7 +14,7 @@ export default function Layout({ children }:{
         >
       <AppSidebar />
       <main className="w-full">
-        <SidebarTrigger className="ml-8 mt-4" />
+        <SidebarTrigger className="ml-4 mt-4" />
         <Elements stripe={stripePromise}>
           {children}
         </Elements>

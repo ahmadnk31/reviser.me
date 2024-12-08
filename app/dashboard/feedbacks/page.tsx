@@ -198,7 +198,7 @@ export default function FeedbackManagement() {
   if (loading) return <div className="animate-pulse p-4">Loading...</div>
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container">
       <Tabs defaultValue="all">
         <TabsList className="grid w-full grid-cols-5 mb-4">
           <TabsTrigger value="all">All</TabsTrigger>

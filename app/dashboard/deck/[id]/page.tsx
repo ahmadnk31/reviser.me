@@ -100,10 +100,10 @@ export default function DeckPage() {
     <div className="container py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">{deck.title}</h1>
+          <h1 className="text-xl md:text-3xl font-bold">{deck.title}</h1>
           <p className="text-muted-foreground">{deck.description}</p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 flex-col gap-4">
           {canEdit && (
             <CreateFlashcardDialog
               deckId={deck.id}
