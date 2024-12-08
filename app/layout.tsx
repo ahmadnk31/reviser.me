@@ -20,27 +20,26 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: 'Reviser - Smart Learning System',
+    title: 'Reviser AI - Smart Learning System',
     description: 'Master any subject with our advanced spaced repetition flashcard system',
     url: 'https://reviser.me',
-    siteName: 'Flashcard Master',
+    siteName: 'Reviser AI',
     locale: 'en_US',
     type: 'website',
-    images: [
-      {
-        url: 'https://reviser.me/og-image.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Reviser - Smart Learning System',
-      },
-    ],
+    images: {
+      url: 'favicon.ico',
+      alt: 'Reviser AI Logo',
+      width: 32,
+      height: 32,
+    },
+    
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Reviser - Smart Learning System',
     description: 'Master any subject with our advanced spaced repetition flashcard system',
     creator: '@yourhandle',
-    images: ['https://reviser.me/twitter-image.jpg'],
+    images: ['favicon-32x32.png'],
   },
   robots: {
     index: true,
@@ -70,6 +69,28 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+      <link
+  rel="icon"
+  href="favicon.ico"
+  type="image/x-icon"
+  sizes="32x32"
+/>
+<link
+  rel="icon"
+  href="favicon.ico"
+  type="image/x-icon"
+  sizes="16x16"
+/>
+<link
+  rel="apple-touch-icon"
+  href="favicon.ico"
+  type="image/x-icon"
+  sizes="180x180"
+/>
+<link
+  rel="manifest"
+  href="/site.webmanifest"
+/>
         <script
           dangerouslySetInnerHTML={{
             __html: `
