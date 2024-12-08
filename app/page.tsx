@@ -13,8 +13,8 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
-        <section className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32">
-          <div className="container flex max-w-[64rem] flex-col items-center gap-4 text-center">
+        <section className="space-y-6 pb-8 pt-6 md:pb-12 flex items-center justify-center md:pt-10 lg:py-32 h-screen">
+          <div className="container flex max-w-[64rem] flex-col justify-center items-center gap-4 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

@@ -103,7 +103,7 @@ export default function DeckPage() {
           <h1 className="text-xl md:text-3xl font-bold">{deck.title}</h1>
           <p className="text-muted-foreground">{deck.description}</p>
         </div>
-        <div className="flex items-center space-x-4 flex-col gap-4">
+        <div className="flex-col sm:flex-row items-center space-x-4">
           {canEdit && (
             <CreateFlashcardDialog
               deckId={deck.id}
