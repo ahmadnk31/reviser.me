@@ -71,7 +71,7 @@ export default function ChatPDF({ onOpen, isOpen,id }: ChatPDFProps) {
 
   return (
    <AlertDialog open={isOpen} onOpenChange={onOpen}>
-    <AlertDialogContent className="overflow-y-auto h-screen">
+    <AlertDialogContent className="overflow-y-auto max-h-[80vh]">
         <AlertDialogHeader className="relative">
         <AlertDialogCancel className='absolute -top-4 text-muted-foreground -right-2 w-fit p-0 border-0 hover:bg-transparent'>
         <X className="h-4 w-4" />

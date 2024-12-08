@@ -75,7 +75,7 @@ console.log(subscription)
       {
         subscription?.status==='active'&&(
             <>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex flex-col md:flex-row justify-between">
         <Button
           variant="outline"
           onClick={() => setShowUpdatePaymentMethod(true)}
