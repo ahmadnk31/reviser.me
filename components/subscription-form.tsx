@@ -19,7 +19,7 @@ export function StripePaymentForm({
   const elements = useElements()
   const [error, setError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
-
+  
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 

@@ -38,8 +38,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Reviser - Smart Learning System',
     description: 'Master any subject with our advanced spaced repetition flashcard system',
-    creator: '@yourhandle',
-    images: ['favicon-32x32.png'],
+    creator: '@ahmad_nekz',
+    images: ['android-chrome-512x512.png'],
   },
   robots: {
     index: true,
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-verification-code',
+    google: 'MWVy8YkPvZE0BhM1EHeHKpPakdwpzyzjaQPDx5atYjM',
     yandex: 'your-yandex-verification-code',
     other: {
       'facebook-domain-verification': 'your-facebook-verification-code',
@@ -91,6 +91,7 @@ export default function RootLayout({
   rel="manifest"
   href="/site.webmanifest"
 />
+<meta name="google-site-verification" content="MWVy8YkPvZE0BhM1EHeHKpPakdwpzyzjaQPDx5atYjM" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

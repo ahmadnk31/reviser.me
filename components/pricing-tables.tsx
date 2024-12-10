@@ -5,6 +5,9 @@ import { motion } from 'framer-motion'
 import { UpgradeModal } from './upgrade'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from './ui/alert-dialog'
+import { toast } from 'sonner'
 
 interface PricingTablesProps {
   billingInterval: 'monthly' | 'yearly'
@@ -105,10 +108,15 @@ export function PricingTables({ billingInterval }: PricingTablesProps) {
   const [subscription_status, setSubscriptionStatus] = useState<string | null>(null);
   const currentPlans = plans[billingInterval]
   const [openUpgradeModal, setOpenUpgradeModal] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null);
+  const [openLoginMessage, setOpenLoginMessage] = useState(false)
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       const { data: user } = await supabase.auth.getUser();
-      if (user === null) {
+      if (user?.user) {
+        setUserId(user.user.id);
+      }
+      if (user.user === null) {
         return;
       }
       const { data: subscription_status } = await supabase.from('users').select('subscription_status').eq('id', user.user?.id).single();
@@ -116,9 +124,17 @@ export function PricingTables({ billingInterval }: PricingTablesProps) {
     };
     fetchSubscriptionStatus();
   }, []);
+  const handleUpgradeModal=()=>{
+    if(subscription_status!=='active'&&userId){
+      setOpenUpgradeModal(true);
+    }else if(!userId){
+      setOpenLoginMessage(true);
+    }
+  }
   return (
     <div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <LoginMessage isOpen={openLoginMessage} onClose={()=>setOpenLoginMessage(false)} />
       <UpgradeModal isOpen={openUpgradeModal} onClose={()=>setOpenUpgradeModal(false)} />
       {subscription_status!=='active'&&currentPlans.map((plan, index) => (
         <motion.div
@@ -165,7 +181,7 @@ export function PricingTables({ billingInterval }: PricingTablesProps) {
           <Button
             className="w-full"
             variant={plan.name === "Pro" ? "default" : "outline"}
-            onClick={() => setOpenUpgradeModal(true)}
+            onClick={handleUpgradeModal}
             disabled={loading === plan.priceId}
           >
             {loading === plan.priceId ? (
@@ -191,5 +207,33 @@ export function PricingTables({ billingInterval }: PricingTablesProps) {
         </div>
       }
     </div>
+  )
+}
+
+type UpgradeModalProps = {
+  isOpen: boolean
+  onClose: () => void
+}
+const LoginMessage = ({isOpen,onClose}:UpgradeModalProps) => {
+  return(
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
+      <AlertDialogContent>
+        <AlertDialogTitle>
+          Please login to upgrade your plan
+        </AlertDialogTitle>
+        <AlertDialogDescription>
+          <Link href="/login">
+          <Button>
+            Login
+          </Button>
+          </Link>
+        </AlertDialogDescription>
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+           Cancel
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

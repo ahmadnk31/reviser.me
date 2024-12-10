@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import { ArrowUpRight, Check, Crown, Rocket, Zap } from 'lucide-react'
@@ -129,6 +129,7 @@ export function UpgradeModal({ isOpen, onClose, userEmail }: UpgradeModalProps) 
 
   const currentPlans = isYearly ? plans.yearly : plans.monthly
 
+  
   const handleUpgrade = () => {
     if (selectedPlan.name === 'Free') {
       // Handle free plan upgrade logic
@@ -138,14 +139,14 @@ export function UpgradeModal({ isOpen, onClose, userEmail }: UpgradeModalProps) 
       setShowSubscriptionForm(true)
     }
   }
-
+  
   const handleSubscriptionComplete = async (subscriptionId: string, status: string) => {
     console.log('Subscription completed:', subscriptionId, 'Status:', status)
     setSubscriptionStatus(status)
     // Here you would typically update the user's subscription status in your backend
     const supabase = createClient()
     const { data: user } = await supabase.auth.getUser()
-
+    
     if (user?.user) {
       const { data } = await supabase.from('subscriptions').update({ status: status }).eq('user_id', user.user.id)
     }
