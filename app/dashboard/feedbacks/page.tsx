@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import {
     Select,
     SelectContent,
@@ -26,13 +27,14 @@ import {
   Trash2, 
   Eye 
 } from "lucide-react"
+import { ResponsiveTabs } from "@/components/responsive-tab"
 
 interface Feedback {
   id: string
   created_at: string
   type: 'feedback' | 'feature' | 'bug'
   content: string
-  status: 'pending' | 'in_progress' | 'completed' | 'declined'
+  status: 'pending' | 'in_progress' | 'completed' | 'declined'|''
   priority: 'low' | 'medium' | 'high'
   admin_notes?: string
 }
@@ -80,33 +82,38 @@ export default function FeedbackManagement() {
 
   const handleEditFeedback = async () => {
     if (!selectedFeedback) return
-
+  
     try {
       const { error } = await supabase
         .from("feedback")
         .update({ 
           content: editContent, 
           type: editType,
-          status: status
+          status: status  // This ensures the status is updated
         })
         .eq("id", selectedFeedback.id)
-
+  
       if (error) throw error
-
-      // Update local state
+  
+      // Update local state to reflect all changes including status
       setFeedbacks(prev => 
         prev.map(f => 
           f.id === selectedFeedback.id 
-            ? { ...f, content: editContent, type: editType } 
+            ? { 
+                ...f, 
+                content: editContent, 
+                type: editType,
+                status: status  // Update status in local state as well
+              } 
             : f
         )
       )
-
+  
       toast({
         title: "Updated",
         description: "Feedback successfully updated"
       })
-
+  
       setDialogMode('view')
     } catch (error) {
       toast({
@@ -199,20 +206,9 @@ export default function FeedbackManagement() {
 
   return (
     <div className="container">
-      <Tabs defaultValue="all">
-        <TabsList className="grid w-full grid-cols-5 mb-4">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="in_progress">In Progress</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="declined">Declined</TabsTrigger>
-        </TabsList>
-        <TabsContent value="all">{renderFeedbackList()}</TabsContent>
-        <TabsContent value="pending">{renderFeedbackList('pending')}</TabsContent>
-        <TabsContent value="in_progress">{renderFeedbackList('in_progress')}</TabsContent>
-        <TabsContent value="completed">{renderFeedbackList('completed')}</TabsContent>
-        <TabsContent value="declined">{renderFeedbackList('declined')}</TabsContent>
-      </Tabs>
+     <ResponsiveTabs
+     renderContent={(status)=>renderFeedbackList(status)}
+     />
 
       {selectedFeedback && (
         <Dialog open={!!selectedFeedback} onOpenChange={() => setSelectedFeedback(null)}>
@@ -276,21 +272,20 @@ export default function FeedbackManagement() {
                     Bug
                   </Button>
                   <Select 
-                    value={status}
-                    defaultValue={selectedFeedback.status}
-                    onValueChange={(value) => setStatus(value as Feedback['status'])}
-                    >
-                    <SelectTrigger className="w-38">
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent >
-                      {FEEDBACK_STATUS.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                    </Select>
+  defaultValue={selectedFeedback.status}
+  onValueChange={(value) => setStatus(value as Feedback['status'])}
+>
+  <SelectTrigger className="w-38">
+    <SelectValue placeholder="Select Status" />
+  </SelectTrigger>
+  <SelectContent>
+    {FEEDBACK_STATUS.map((s) => (
+      <SelectItem key={s} value={s}>
+        {s}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
                 </div>
                 <textarea 
                   value={editContent}

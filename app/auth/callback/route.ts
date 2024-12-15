@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     }
 
     // Default redirect if no redirect_to parameter
-    return NextResponse.redirect(`${origin}/dashboard`);
+    return NextResponse.redirect(`${origin}/onboarding`);
 
   } catch (error) {
     console.error("Unexpected error in auth callback:", error);

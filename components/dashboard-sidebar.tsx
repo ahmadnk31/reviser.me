@@ -112,12 +112,14 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem  key={item.title}>
                   <SidebarMenuButton className={cn(
-                    "flex items-center hover:bg-accent text-xl md:text-base",
+                    "flex items-center hover:bg-accent ",
                     pathname===item.href ? "text-primary" : "text-muted-foreground"
                   )} asChild>
-                    <a href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                    <a href={item.href} className=''>
+                      <div>
+                        <item.icon className="size-6 mr-1 md:size-5" />
+                      </div>
+                      <span className="text-xl md:text-base">{item.title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

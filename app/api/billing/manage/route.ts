@@ -7,9 +7,9 @@ export async function GET(req: Request) {
   const cookieStore = cookies();
   try {
     const supabase = createClient(cookieStore);
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!data.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     const { data: user } = await supabase
       .from('users')
       .select('stripe_customer_id')
-      .eq('id', session.user.id)
+      .eq('id', data.user.id)
       .single();
 
     if (!user?.stripe_customer_id) {

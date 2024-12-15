@@ -236,6 +236,7 @@ export function CreateFlashcardDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
+        className="lg:fit w-full"
         >
           <Plus className="mr-2 h-4 w-4" />
           Add Flashcard

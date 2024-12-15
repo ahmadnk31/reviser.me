@@ -11,9 +11,9 @@ export async function POST(req: Request) {
   const cookieStore = cookies()
   try {
     const supabase = await createClient(cookieStore)
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!data.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -33,16 +33,16 @@ export async function POST(req: Request) {
     const { data: user } = await supabase
       .from('users')
       .select('stripe_customer_id')
-      .eq('id', session.user.id)
+      .eq('id', data.user.id)
       .single()
 
     let customerId = user?.stripe_customer_id
 
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: session.user.email,
+        email: data.user.email,
         metadata: {
-          supabase_user_id: session.user.id,
+          supabase_user_id: data.user.id,
         },
       })
       customerId = customer.id
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       await supabase
         .from('users')
         .update({ stripe_customer_id: customerId })
-        .eq('id', session.user.id)
+        .eq('id', data.user.id)
     }
 
     // Fetch the price to get the amount

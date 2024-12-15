@@ -74,8 +74,8 @@ export function FeedbackDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <MessageSquarePlus className="mr-2 h-4 w-4" />
+        <Button className="flex justify-start md:justify-center border-0 md:border" variant="outline">
+          <MessageSquarePlus className="mr-2 size-6 md:size-4" />
           Give Feedback
         </Button>
       </DialogTrigger>

@@ -42,7 +42,7 @@ export default function SignUpPage() {
           title: "Success!",
           description: "Please check your email to confirm your account.",
         });
-        router.push("/login");
+        router.push("/onboarding");
       }
       
     } catch (error: any) {

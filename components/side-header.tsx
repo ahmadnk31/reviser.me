@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
-import { Brain, Menu, Crown } from 'lucide-react'
+import { Brain, Menu, Crown, LucideLayoutDashboard } from 'lucide-react'
 import { ThemeToggle } from "@/components/theme-toggle"
 import {
   DropdownMenu,
@@ -37,7 +37,9 @@ export function SiteHeader() {
   const MobileNavItems = () => (
     <>
       <Button variant="ghost" asChild className="w-full justify-start">
-        <Link href="/dashboard">Dashboard</Link>
+        <Link href="/dashboard">
+        <LucideLayoutDashboard className="size-6 mr-2" />
+        Dashboard</Link>
       </Button>
       <FeedbackDialog />
     </>
