@@ -21,11 +21,9 @@ export default function OnboardingPage() {
   })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { toast } = useToast()
   const supabase = createClient()
 
-  const userId = searchParams.get("userId")
   
 
   const handleNextStep = () => {
