@@ -97,12 +97,13 @@ export default function DeckPage() {
   }
 
   return (
-    <div className="container py-8">
+    <div className="container  py-8">
       <div className="flex flex-col lg:flex-row lg:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-xl md:text-3xl font-bold">{deck.title}</h1>
           <p className="text-muted-foreground">{deck.description}</p>
         </div>
+
         <div className="flex items-center justify-center gap-4">
           {canEdit && (
             <CreateFlashcardDialog
@@ -114,7 +115,7 @@ export default function DeckPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="cards" className="space-y-4 w-full lg:w-fit">
+      <Tabs defaultValue="cards" className="space-y-4 w-full">
         <TabsList className="w-full lg:w-fit">
           <TabsTrigger className="w-full lg:w-fit" value="cards">Flashcards</TabsTrigger>
           <TabsTrigger className="w-full lg:w-fit" value="study">Study</TabsTrigger>

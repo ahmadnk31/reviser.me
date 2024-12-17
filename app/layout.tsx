@@ -5,6 +5,7 @@ import { AuthProvider } from '@/components/auth-provider';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { SiteHeader } from '@/components/side-header';
+import { SupportChatWidget } from '@/components/support-chat-widget';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -113,6 +114,7 @@ export default function RootLayout({
             <SiteHeader />
             {children}
             <Toaster />
+            <SupportChatWidget />
           </AuthProvider>
         </ThemeProvider>
       </body>

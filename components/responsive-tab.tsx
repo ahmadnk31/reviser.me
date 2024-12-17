@@ -71,7 +71,7 @@ export function ResponsiveTabs({
       </Tabs>
 
       {/* Mobile View - Carousel */}
-      <div className="block md:hidden px-12">
+      <div className="block md:hidden px-8">
         <Carousel 
           opts={{
             align: "start",
@@ -82,7 +82,7 @@ export function ResponsiveTabs({
             {tabs.map((tab) => (
               <CarouselItem 
                 key={tab.value} 
-                className="basis-1/3 sm:basis-1/4 lg:basis-1/5"
+                className="basis-1/2 sm:basis-1/4 lg:basis-1/5"
               >
                 <Card 
                   className={`p-2 text-center cursor-pointer ${activeTab === tab.value 

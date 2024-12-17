@@ -3,15 +3,34 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Features } from '@/components/features';
-import { Testimonials } from '@/components/testimonials';
+import { Testimonial } from '@/components/testimonial';
 import { motion } from 'framer-motion';
 import { PricingTables } from '@/components/pricing-tables';
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import RetroGrid from '@/components/ui/retro-grid';
+import { AvatarCircle } from '@/components/avatar-circle';
+import { HowItWorksVideo } from '@/components/how-it-works-video';
 
 export default function Home() {
+  const supabase=createClient()
+  const router=useRouter()
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data:{user} } = await supabase.auth.getUser()
+      if(user?.id){
+        return router.push('/dashboard')
+      }
+    };
+    fetchUserId();
+  }, []);
+  
+
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex flex-col">
       <main className="flex-1">
-        <section className="space-y-6 pb-8 pt-6 md:pb-12 flex items-center justify-center md:pt-10 lg:py-32 h-screen">
+        <section className="space-y-6 pb-8 pt-6 md:pb-12 flex items-center justify-center md:pt-10 lg:py-32 h-[80vh]">
           <div className="container flex max-w-[64rem] flex-col justify-center items-center gap-4 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -26,7 +45,10 @@ export default function Home() {
                 Learn more effectively with our scientifically-proven spaced repetition system.
                 Create, share, and master flashcards that adapt to your learning pace.
               </p>
-              <div className="mt-8 space-x-4">
+              <div className='flex items-center justify-center mt-6'>
+              <AvatarCircle  />
+              </div>
+              <div className="mt-8 space-x-4 relative z-50">
                 <Button size="lg" asChild>
                   <Link href="/signup">Start Learning</Link>
                 </Button>
@@ -36,8 +58,14 @@ export default function Home() {
               </div>
             </motion.div>
           </div>
+          <RetroGrid />
         </section>
-
+        <div className='mx-6 mt-40'>
+          <h1 className="text-3xl mb-16 font-bold text-center text-white">
+            How it works
+          </h1>
+          <HowItWorksVideo />
+        </div>
         <Features />
 
         <section className="container py-24">
@@ -100,7 +128,8 @@ export default function Home() {
           </div>
         </section>
 
-        <Testimonials />
+          
+        <Testimonial />
 
         <section className="container py-24">
           <div className="text-center mb-16">
@@ -157,8 +186,8 @@ export default function Home() {
             <div>
               <h3 className="font-semibold mb-4">Legal</h3>
               <ul className="space-y-2">
-                <li><Link href="/privacy" className="text-muted-foreground hover:text-primary">Privacy</Link></li>
-                <li><Link href="/terms" className="text-muted-foreground hover:text-primary">Terms</Link></li>
+                <li><Link href="/legal/privacy" className="text-muted-foreground hover:text-primary">Privacy</Link></li>
+                <li><Link href="/legal/terms" className="text-muted-foreground hover:text-primary">Terms</Link></li>
               </ul>
             </div>
           </div>

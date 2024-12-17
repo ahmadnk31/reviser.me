@@ -102,6 +102,7 @@ export interface Question {
         questions: parsedQuestions,
         metadata: { type: questionType, difficulty: difficultyLevel, topic }
       });
+      
      
       return NextResponse.json(parsedQuestions);
   

@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const code = requestUrl.searchParams.get("code");
     const origin = requestUrl.origin;
     const redirectTo = requestUrl.searchParams.get("redirect_to")?.toString();
-
+     const next = requestUrl.searchParams.get('next') ?? '/'
     if (!code) {
       console.error("No code provided in auth callback");
       return NextResponse.json(
@@ -18,16 +18,29 @@ export async function GET(request: Request) {
     }
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
-    
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (error) {
-      console.error("Error exchanging code for session:", error);
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
+    if (typeof code === 'string') {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) {
+        console.error("Error exchanging code for session:", error);
+        return NextResponse.json(
+          { error: error.message },
+          { status: 500 }
+        );
+      }
+      if (!error) {
+        const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
+        const isLocalEnv = process.env.NODE_ENV === 'development'
+        if (isLocalEnv) {
+          // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
+          return NextResponse.redirect(`${origin}${next}`)
+        } else if (forwardedHost) {
+          return NextResponse.redirect(`https://${forwardedHost}${next}`)
+        } else {
+          return NextResponse.redirect(`${origin}${next}`)
+        }
+      }
     }
+   
 
     // If successful and has redirect URL
     if (redirectTo) {

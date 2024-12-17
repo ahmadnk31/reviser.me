@@ -1,5 +1,5 @@
 'use client'
-import { BarChart2, BotIcon, Brain, Calendar, FileType2Icon, Home, Inbox, MessageSquareQuote, Search, Settings } from "lucide-react"
+import { BarChart2, BotIcon, Brain, Calendar, CoinsIcon, FileType2Icon, Home, Inbox, LifeBuoyIcon, MessageSquareQuote, Search, Settings, SparklesIcon } from "lucide-react"
 
 import {
   Sidebar,
@@ -18,9 +18,11 @@ import { Button } from "./ui/button"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
+import { checkUserAccess } from "@/lib/check-access"
+import { BorderBeam } from "./ui/border-beam"
 
 // Menu items.
-const items = [
+const adminItems = [
     {
       title: "Decks",
       href: "/dashboard",
@@ -56,7 +58,48 @@ const items = [
         title: "Billing",
         href: "/dashboard/billing",
         icon: Inbox,
+    },
+    {
+      title:"Support",
+      href:"/dashboard/support",
+      icon:LifeBuoyIcon
     }
+  ]
+  
+  const userItems = [
+    {
+      title: "Decks",
+      href: "/dashboard",
+      icon: Brain,
+    },
+    {
+      title: "Quizzes",
+      href: "/dashboard/quiz",
+      icon: FileType2Icon,
+    },
+    {
+      title:"Chats",
+      href:"/dashboard/quiz/chats",
+      icon:BotIcon
+    },
+    
+    {
+      title: "Analytics",
+      href: "/dashboard/analytics",
+      icon: BarChart2,
+    },
+    {
+      title: "Settings",
+      href: "/dashboard/settings",
+      icon: Settings,
+    },
+    
+    {
+        title: "Billing",
+        href: "/dashboard/billing",
+        icon: Inbox,
+    },
+    
   ]
   
 
@@ -68,6 +111,9 @@ export function AppSidebar() {
     const [userId, setUserId] = useState<string>('')
     const [user, setUser] = useState<string>('')
     const [subscriptionStatus, setSubscriptionStatus] = useState<string>('')
+    const [hasAccess,setHasAccess]=useState<boolean>(false)
+    const [credit, setCredit] = useState<number>(0)
+    const [items, setItems] = useState(userItems)
     useEffect(() => {
         async function fetchUser() {
             try {
@@ -75,6 +121,13 @@ export function AppSidebar() {
                 if (error) throw error
                 setUser(data.user.email ?? '')
                 setUserId(data.user.id)
+                const access=await checkUserAccess(data.user.id)
+                const {data:free_credits}=await supabase.from('users').select('free_credits,role').eq('id',data.user.id).single()
+                setCredit(free_credits?.free_credits)
+                setHasAccess(access)
+                if(free_credits?.role==='admin'){
+                    setItems(adminItems)
+                }
             } catch (error) {
                 console.error('Error fetching user:', error)
             }
@@ -82,6 +135,7 @@ export function AppSidebar() {
         fetchUser()
     }
     , [])
+    console.log(`hasAccess: ${hasAccess}`)
     useEffect(() => {
         async function fetchSubscriptionStatus() {
             if(userId){
@@ -128,18 +182,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      {
-        subscriptionStatus!=='active' && (
+      
+      
           <SidebarFooter className="bg-background p-4">
         <Button
-          className="w-full"
+          className="w-full relative"
           onClick={() => setOpen(true)}
         >
-            Upgrade Plan
+          
+            {
+                credit>0?`${credit} credits remaining`:'Upgrade Plan'
+            }
+          <SparklesIcon className="size-4 ml-2 animate-pulse" />
         </Button>
         </SidebarFooter>
-        )
-      }
+       
 
     </Sidebar>
     </>

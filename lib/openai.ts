@@ -33,7 +33,7 @@ export async function generateFlashcardsPrompt(topic: string, count: number = 5)
           content: prompt
         }
       ],
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o",
       temperature: 0.7,
       response_format: { type: "json_object" }
     });

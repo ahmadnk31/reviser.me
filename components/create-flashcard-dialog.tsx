@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,8 +16,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/lib/supabase/client"
-import { ImagePlus, Mic, Plus, StopCircle, Wand2 } from 'lucide-react'
+import { AlertCircle, AlertTriangle, ImagePlus, Mic, Plus, StopCircle, Wand2 } from 'lucide-react'
 import type { Flashcard } from "@/lib/types"
+import { checkUserAccess } from "@/lib/check-access"
+import { AlertDialog, AlertDialogContent } from "./ui/alert-dialog"
+import SubscriptionMessage from "./subscription-message"
 
 interface CreateFlashcardDialogProps {
   deckId: string
@@ -41,14 +44,28 @@ export function CreateFlashcardDialog({
   const [generatingImage, setGeneratingImage] = useState(false)
   const { toast } = useToast()
   const supabase = createClient()
-
+  const [hasAccess, setHasAccess] = useState(false)
+  useEffect(() => {
+    const fetchHasAccess = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (user === null) {
+        return;
+      }
+      const userId = user.user?.id;
+      if (userId) {
+        const access = await checkUserAccess(userId);
+        setHasAccess(access);
+      }
+    };
+    fetchHasAccess();
+  }, []);
   const handleImageUpload = async (file: File, side: "front" | "back") => {
     const fileExt = file.name.split(".").pop()
     const fileName = `${Math.random()}.${fileExt}`
     const filePath = `${deckId}/${fileName}`
 
     const { error: uploadError } = await supabase.storage
-      .from("flashcard-media")
+      .from("quiz")
       .upload(filePath, file)
 
     if (uploadError) throw uploadError
@@ -66,18 +83,7 @@ export function CreateFlashcardDialog({
       });
       return;
     }
-    const {data:subscription_status}=await supabase.from('users').select('subscription_status').eq('id',user.id).single();
-    if(subscription_status?.subscription_status!=="active"){
-      return(
-        toast(
-        {
-          title: "Subscription Required",
-          description: "Please subscribe to generate images.",
-          variant: "destructive",
-        }
-        )
-      )
-    }
+
     setGeneratingImage(true)
     try {
       const prompt = side === "front" ? front : back
@@ -97,6 +103,7 @@ export function CreateFlashcardDialog({
       const imageResponse = await fetch(data.imageUrl)
       const blob = await imageResponse.blob()
       const file = new File([blob], "ai-generated.png", { type: "image/png" })
+     
   
       if (side === "front") {
         setFrontImage(file)
@@ -236,12 +243,14 @@ export function CreateFlashcardDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
+        disabled={hasAccess===false}
         className="lg:fit w-full"
         >
           <Plus className="mr-2 h-4 w-4" />
           Add Flashcard
         </Button>
       </DialogTrigger>
+      
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create New Flashcard</DialogTitle>
@@ -448,5 +457,15 @@ export function CreateFlashcardDialog({
         </form>
       </DialogContent>
     </Dialog>
+  )
+}
+
+const SubscribeMessage = () => {
+  return (
+    <AlertDialog>
+      <AlertDialogContent>
+        <SubscriptionMessage/>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

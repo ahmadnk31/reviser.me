@@ -145,32 +145,34 @@ const handleDragEnd = async (event: DragEndEvent) => {
     const newIndex = items.findIndex((item) => item.id === over.id)
 
     const newItems = arrayMove(items, oldIndex, newIndex)
+    
+    // Update both local state and trigger parent update
     setItems(newItems)
-
+    
     try {
-      // Update positions in the database
-      const updates = newItems.map((item, index) => ({
-        id: item.id,
-        position: index,
-      }))
+      // More robust update method
+      const updatePromises = newItems.map((item, index) => 
+        supabase
+          .from("flashcards")
+          .update({ position: index })
+          .eq('id', item.id)
+      )
 
-      const { error } = await supabase
-        .from("flashcards")
-        .upsert(
-          updates.map((update) => ({
-            id: update.id,
-            position: update.position,
-            updated_at: new Date().toISOString(),
-          })),
-          { onConflict: "id" }
-        )
+      const results = await Promise.all(updatePromises)
 
-      if (error) throw error
+      const hasErrors = results.some(result => result.error)
+      
+      if (hasErrors) {
+        throw new Error('One or more updates failed')
+      }
 
       toast({
         title: "Success",
         description: "Flashcard order updated",
       })
+      
+      // Trigger parent component update to ensure consistency
+      onUpdate()
     } catch (error) {
       console.error("Error updating flashcard order:", error)
       toast({

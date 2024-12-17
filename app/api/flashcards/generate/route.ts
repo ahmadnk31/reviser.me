@@ -40,7 +40,10 @@ export async function POST(req: Request) {
 
     // Generate flashcards
     const data = await generateFlashcardsPrompt(topic, count);
-    
+    const {data:free_credits}=await supabase.from('users').select('free_credits').eq('id',user.id).single()
+    if(free_credits?.free_credits>0&&data.flashcards.length>0){
+      await supabase.from('users').update({free_credits:free_credits?.free_credits-1}).eq('id',user.id)
+    }
     return NextResponse.json<FlashcardResponse>(data);
   } catch (error: any) {
     console.error('Flashcard generation error:', error);

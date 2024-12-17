@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SubscriptionMessage() {
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-center h-[70vh]">
       <Card className="max-w-md w-full shadow-lg">
         <CardHeader className="bg-accent text-card-foreground p-4 rounded-t-lg">
           <CardTitle className="text-2xl font-bold">Subscription Required</CardTitle>

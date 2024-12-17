@@ -76,7 +76,6 @@ export async function POST(req: Request) {
     console.log(`Title: ${title}`);
     
     const {data,error}=await supabase.from("documents").insert([
-      
       {
         document_id: documentId,
         user_id: user?.id,
@@ -94,6 +93,12 @@ export async function POST(req: Request) {
       }
     ]);
     console.log(`Document saved: ${data}`);
+    //i want to reduce user's free credit based on the number of pages in the document
+    const {data:free_credits}=await supabase.from('users').select('free_credits').eq('id',user?.id).single()
+    if(free_credits?.free_credits>0){
+      const newCredit=free_credits?.free_credits-1
+    const {data:updatedUser,error:updateError}=await supabase.from('users').update({free_credits:newCredit}).eq('id',user?.id).single()
+    }
     if(error){
       console.error(error)
       return new Response("Error saving document", { status: 500 });

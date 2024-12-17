@@ -4,13 +4,14 @@ import { use, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles } from 'lucide-react';
+import { AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Flashcard } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
 import SubscriptionMessage from './subscription-message';
 import { AlertDialog } from '@radix-ui/react-alert-dialog';
-import { AlertDialogCancel, AlertDialogContent, AlertDialogFooter } from './ui/alert-dialog';
+import { AlertDialogContent, AlertDialogFooter } from './ui/alert-dialog';
+import { checkUserAccess } from '@/lib/check-access';
 
 interface AIGeneratorProps {
   onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
@@ -20,23 +21,31 @@ export function AIGenerator({ onFlashcardsGenerated }: AIGeneratorProps) {
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const [giveAccess, setGiveAccess] = useState(false);
   const supabase = createClient();
+  const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   useEffect(() => {
-    const fetchSubscriptionStatus = async () => {
-      const { data: user } = await supabase.auth.getUser();
+    const fetchHasAccess= async () => {
+      const { data: {user} } = await supabase.auth.getUser();
       if (user === null) {
         return;
       }
-      const { data: subscription_status } = await supabase.from('users').select('subscription_status').eq('id', user.user?.id).single();
-      setSubscriptionStatus(subscription_status?.subscription_status);
+      if(user?.id){
+        const access=await checkUserAccess(user.id)
+        setHasAccess(access)
+      }
+    
     };
-    fetchSubscriptionStatus();
+    fetchHasAccess();
   }, []);
   const handleGenerate = async () => {
     const trimmedTopic = topic.trim();
     
-   
+   if(hasAccess===false){
+     setGiveAccess(true)
+     return;
+    }
     
     
     if (!trimmedTopic) {
@@ -47,20 +56,9 @@ export function AIGenerator({ onFlashcardsGenerated }: AIGeneratorProps) {
       });
       return;
     }
-
+    
     setLoading(true);
     try {
-      if(subscriptionStatus!=="active"){
-        return(
-          toast(
-          {
-            title: "Subscription Required",
-            description: "Please subscribe to generate flashcards.",
-            variant: "destructive",
-          }
-          )
-        )
-      }
       const response = await fetch('/api/flashcards/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,6 +92,7 @@ export function AIGenerator({ onFlashcardsGenerated }: AIGeneratorProps) {
 
   return (
     <div className="space-y-4">
+      
       <div className="space-y-2">
         <Label htmlFor="topic">Topic</Label>
         <Input
@@ -103,7 +102,7 @@ export function AIGenerator({ onFlashcardsGenerated }: AIGeneratorProps) {
           onChange={(e) => setTopic(e.target.value)}
           disabled={loading}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !loading && topic.trim()) {
+            if (e.key === 'Enter' && !loading && topic.trim()&&hasAccess===true) {
               handleGenerate();
             }
           }}
@@ -111,7 +110,7 @@ export function AIGenerator({ onFlashcardsGenerated }: AIGeneratorProps) {
       </div>
       <Button
         onClick={handleGenerate}
-        disabled={loading || !topic.trim()}
+        disabled={loading || !topic.trim()||hasAccess===false}
         className="w-full"
       >
         {loading ? (
@@ -126,6 +125,14 @@ export function AIGenerator({ onFlashcardsGenerated }: AIGeneratorProps) {
           </>
         )}
       </Button>
+      {
+        hasAccess===false&&(
+          <span className='mt-2 flex items-center gap-2'>
+            <AlertTriangle className="text-orange-500" />
+            <p className="text-orange-500 text-sm">You need to subscribe to generate flashcards</p>
+          </span>
+        )
+      }
     </div>
   );
 }

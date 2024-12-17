@@ -3,12 +3,15 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from '@/lib/supabase/client'
-import { Brain } from "lucide-react"
+import { Brain, Loader2 } from 'lucide-react'
+import { IconBrandGoogleFilled } from '@tabler/icons-react'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
@@ -23,20 +26,19 @@ export default function SignUpPage() {
     setLoading(true)
 
     try {
-      const { data,error } =  await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data:{
-            role:'user'
+          data: {
+            role: 'user'
           }
         },
       })
 
       if (error) throw error
 
-      
       if (data.user) {
         toast({
           title: "Success!",
@@ -44,7 +46,6 @@ export default function SignUpPage() {
         });
         router.push("/onboarding");
       }
-      
     } catch (error: any) {
       toast({
         title: "Error",
@@ -56,59 +57,133 @@ export default function SignUpPage() {
     }
   }
 
+  const handleSignUpWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+
+      if (error) throw error
+
+      router.push("/onboarding")
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to sign up with Google",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
-    <div className="container flex h-screen w-screen flex-col items-center justify-center">
-      <Link
-        href="/"
-        className="inline-flex items-center space-x-2 text-lg font-bold"
+    <div className="container flex py-8 w-screen flex-col items-center justify-center bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        <Brain className="h-6 w-6" />
-        <span>Reviser</span>
-      </Link>
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-        <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Create an account
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Enter your details to get started
-          </p>
-        </div>
-        <form onSubmit={handleSignUp} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="m@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <Button className="w-full" type="submit" disabled={loading}>
-            {loading ? "Creating account..." : "Create account"}
-          </Button>
-        </form>
-        <p className="px-8 text-center text-sm text-muted-foreground">
-          <Link
-            href="/login"
-            className="hover:text-brand underline underline-offset-4"
-          >
-            Already have an account? Sign in
-          </Link>
-        </p>
-      </div>
+        <Link
+          href="/"
+          className="inline-flex items-center space-x-2 text-2xl font-bold text-primary mb-8"
+        >
+          <Brain className="h-8 w-8" />
+          <span>Reviser</span>
+        </Link>
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="w-full max-w-md"
+      >
+        <Card className="shadow-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+            <CardDescription className="text-center">
+              Enter your details to get started
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="transition-all duration-200 focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="transition-all duration-200 focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <Button className="w-full" type="submit" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create account"
+                )}
+              </Button>
+            </form>
+            <div className="mt-4 text-xs text-center text-muted-foreground">
+              By signing up, you agree to our{" "}
+              <Link href="/legal/terms" className="text-primary hover:underline">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/legal/privacy" className="text-primary hover:underline">
+                Privacy Policy
+              </Link>
+            </div>
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+            <Button 
+              onClick={handleSignUpWithGoogle}
+              variant="outline" 
+              className="w-full transition-all duration-200 hover:bg-primary hover:text-primary-foreground"
+            >
+              <IconBrandGoogleFilled className="w-5 h-5 mr-2" />
+              Continue with Google
+            </Button>
+          </CardContent>
+          <CardFooter>
+            <p className="px-8 text-center text-sm text-muted-foreground w-full">
+              <Link
+                href="/login"
+                className="hover:text-primary underline underline-offset-4 transition-colors duration-200"
+              >
+                Already have an account? Sign in
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
+      </motion.div>
     </div>
   )
 }
+

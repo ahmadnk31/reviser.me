@@ -46,8 +46,8 @@ export function SiteHeader() {
   )
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center justify-between">
+    <header className="sticky  top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto px-5 flex h-14 items-center justify-between">
         <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <Brain className="h-6 w-6" />
@@ -93,7 +93,7 @@ export function SiteHeader() {
                     <span className="sr-only">Toggle menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right">
+                <SheetContent side="left">
                   <div className="flex flex-col space-y-4 mt-4">
                     <MobileNavItems />
                   </div>

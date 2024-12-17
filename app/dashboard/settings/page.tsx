@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import Link from "next/link"
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(false)
@@ -120,33 +121,11 @@ export default function SettingsPage() {
                       Update your account password
                     </CardDescription>
                   </CardHeader>
-                  <form onSubmit={handleUpdatePassword}>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="password">New Password</Label>
-                        <Input
-                          id="password"
-                          name="password"
-                          type="password"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">Confirm Password</Label>
-                        <Input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type="password"
-                          required
-                        />
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button type="submit" disabled={loading}>
-                        {loading ? "Updating..." : "Update Password"}
-                      </Button>
-                    </CardFooter>
-                  </form>
+                  <CardContent>
+                  <Button asChild>
+                    <Link href="/forgot-password">Reset password</Link>
+                  </Button>
+                  </CardContent>
                 </Card>
 
                 <Card>

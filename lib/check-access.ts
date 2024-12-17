@@ -6,7 +6,7 @@ export async function checkUserAccess(userId: string) {
     // Fetch user's subscription details
     const { data: userData, error } = await supabase
       .from('users')
-      .select('subscription_status, subscription_access_end')
+      .select('subscription_status, subscription_end_date, free_credits')
       .eq('id', userId)
       .single()
   
@@ -15,12 +15,12 @@ export async function checkUserAccess(userId: string) {
     }
   
     // Check if subscription is active or still within access period
-    if (userData.subscription_status === 'active') {
+    if (userData.subscription_status === 'active'||userData.free_credits>0) {
       return true
     }
-  
+    
     if (userData.subscription_status === 'pending_cancellation') {
-      const accessEnd = new Date(userData.subscription_access_end)
+      const accessEnd = new Date(userData.subscription_end_date)
       return accessEnd > new Date()
     }
   

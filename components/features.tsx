@@ -1,5 +1,7 @@
 import { Brain, Sparkles, Users, LineChart, Clock, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ShineBorder from './ui/shine-border';
+import { BorderBeam } from './ui/border-beam';
 
 const features = [
   {
@@ -45,13 +47,14 @@ export function Features() {
       </div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {features.map((feature, index) => (
-          <motion.div
+          
+            <motion.div
             key={index}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
             viewport={{ once: true }}
-            className="relative overflow-hidden rounded-lg border bg-background p-2"
+            className="relative w-full border overflow-hidden rounded-lg bg-background"
           >
             <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
               <feature.icon className="h-12 w-12 text-primary" />
@@ -62,6 +65,7 @@ export function Features() {
                 </p>
               </div>
             </div>
+            <BorderBeam  size={250} duration={12} delay={9*index} />
           </motion.div>
         ))}
       </div>
