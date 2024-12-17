@@ -16,12 +16,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { FeedbackDialog } from "./feedback-dialog"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 export function SiteHeader() {
   const { user, signOut } = useAuth()
   const supabase = createClient()
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null)
-
+  const router=useRouter()
+ 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       const { data: user } = await supabase.auth.getUser();
@@ -81,7 +83,7 @@ export function SiteHeader() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => signOut()}>
+                  <DropdownMenuItem onClick={()=>signOut()}>
                     Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>

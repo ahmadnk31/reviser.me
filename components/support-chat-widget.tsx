@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { createClient } from '@/lib/supabase/client'
 import { MessageCircle, X, Send, Check, CheckCheck } from 'lucide-react'
-import ShinyButton from './ui/shiny-button'
 
 type Message = {
   id: string
@@ -39,13 +38,21 @@ export function SupportChatWidget() {
   const supabase = createClient()
   const [user, setUser] = useState<User>()
   const [conversation, setConversation] = useState<Conversation | null>(null)
-
+  const [userId, setUserId] = useState<string>('')
+  useEffect(() => {
+    const fetchUser=async()=>{
+        const { data, error } = await supabase.auth.getUser()
+        if (error) throw error
+        setUserId(data.user.id)
+    }
+    fetchUser()
+    }, [setIsOpen])
+    console.log(`userId: ${userId}`)
   useEffect(() => {
     const fetchUserAndConversation = async () => {
       try {
         const { data: authData, error: authError } = await supabase.auth.getUser()
         if (authError) throw authError
-
         const { data: userData } = await supabase
           .from('users')
           .select('*')
@@ -83,7 +90,7 @@ export function SupportChatWidget() {
     }
 
     fetchUserAndConversation()
-  }, [])
+  }, [isOpen,setIsOpen])
 
   useEffect(() => {
     if (!conversation) return
@@ -171,7 +178,9 @@ export function SupportChatWidget() {
     <>
      
      <Button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+            setIsOpen(true)
+        }}
         className="fixed bottom-4 right-4 rounded-full ring-2 size-16"
         aria-label="Open support chat"
       >
@@ -236,15 +245,15 @@ export function SupportChatWidget() {
               <div className="flex">
                 <Textarea
                   placeholder={
-                    user 
-                      ? `Hi ${user.full_name?.split(' ')[0]||'dear user'}! How can we help you?`
+                    userId
+                      ? `Hi ${user?.full_name?.split(' ')[0]||'dear user'}! How can we help you?`
                       : 'Please sign in to chat with us.'
                   }
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   className="flex-grow mr-2"
                   required
-                  disabled={!user || !conversation}
+                  disabled={!userId}
                 />
                 <Button 
                   type="submit" 
