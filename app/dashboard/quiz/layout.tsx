@@ -10,7 +10,7 @@ export default async function GeneratorPage({children}:{
     const {data:{user}}=await supabase.auth.getUser()
     const {data:credits}=await supabase.from('users').select('free_credits').eq('id',user?.id).single()
     const hasAccess = user?.id ? await checkUserAccess(user.id) : false;
-    if (hasAccess === false&&credits?.free_credits===0) {
+    if (hasAccess === false) {
         return (
             <SubscriptionMessage/>
         )
