@@ -94,21 +94,22 @@ export default function ChatPDF({ onOpen, isOpen, id }: ChatPDFProps) {
         console.log('Starting PDF export...');
     
         // Open the file in a new window
-        window.open(fileUrl, '_blank');
     
         // Create a hidden link element for downloading
         const link = document.createElement('a');
         link.href = fileUrl;
-        link.download = filename;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-    
+       
+
         // Trigger the download
+        link.download = filename;
+        const blob = await fetch(fileUrl).then(r => r.blob());
+        const downloadUrl = URL.createObjectURL(blob);
+        link.href = downloadUrl;
+        link.setAttribute('target', '_blank');
+        document.body.appendChild(link);
         link.click();
-    
-        // Clean up
+        window.open(fileUrl, '_blank');
         document.body.removeChild(link);
-    
         toast({
           title: "PDF exported successfully",
           description: "The PDF has been opened in a new tab and downloaded.",

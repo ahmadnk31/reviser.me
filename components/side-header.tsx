@@ -51,7 +51,7 @@ export function SiteHeader() {
 
   const signOut = async () => {
     await supabase.auth.signOut()
-    router.push('/signin')
+    router.push('/login')
   }
 
 

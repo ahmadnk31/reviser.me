@@ -149,7 +149,7 @@ Your Answer: ${answers[q.id]}
   title="Quiz Results"
 />
 
-          <Button onClick={restartQuiz}>
+          <Button className='ml-2' onClick={restartQuiz}>
             Take Another Quiz
           </Button>
         </div>
