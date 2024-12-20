@@ -1,6 +1,6 @@
 'use client'
-import { BarChart2, BotIcon, Brain, Calendar, CoinsIcon, FileType2Icon, Home, Inbox, LifeBuoyIcon, MessageSquareQuote, Search, Settings, SparklesIcon } from "lucide-react"
-
+import { BarChart2, BotIcon, Brain, Calendar, CoinsIcon, FileType2Icon, Home, Inbox, LifeBuoyIcon, LucideIcon, MessageSquareQuote, Search, Settings, SparklesIcon } from "lucide-react"
+import { IconFileTypePdf } from '@tabler/icons-react';
 import {
   Sidebar,
   SidebarContent,
@@ -37,6 +37,11 @@ const adminItems = [
       title:"Chats",
       href:"/dashboard/quiz/chats",
       icon:BotIcon
+    },
+    {
+      title:'Generated Quizzes',
+      href:'/dashboard/quiz/generated-questions',
+      icon:IconFileTypePdf as LucideIcon
     },
     
     {
@@ -82,7 +87,11 @@ const adminItems = [
       href:"/dashboard/quiz/chats",
       icon:BotIcon
     },
-    
+    {
+      title:'Generated Quizzes',
+      href:'/dashboard/quiz/generated-questions',
+      icon:IconFileTypePdf
+    },
     {
       title: "Analytics",
       href: "/dashboard/analytics",

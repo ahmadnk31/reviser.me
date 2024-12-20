@@ -44,3 +44,29 @@ export async function resetPasswordAction(formData:FormData){
     return encodedRedirect('success','/dashboard/reset-password','Password reset successfully')
 }
 
+export async function signOutAction(){
+    const cookieStore=cookies()
+    const supabase=await createClient(cookieStore)
+    await supabase.auth.signOut()
+    return redirect('/auth/signin')
+}
+export async function signInWithGoogleAction(){
+    const cookieStore=cookies()
+    const supabase=await createClient(cookieStore)
+    await supabase.auth.signInWithOAuth({provider:'google'})
+}
+
+export async function signUpAction(formData:FormData){
+    const cookieStore=cookies()
+    const supabase=await createClient(cookieStore)
+    const email=formData.get('email') as string
+    const password=formData.get('password') as string
+    if(!email || !password){
+        return encodedRedirect('error','/auth/signup','Email and password are required')
+    }
+    const {error}=await supabase.auth.signUp({email,password})
+    if(error){
+        return encodedRedirect('error','/auth/signup',error.message)
+    }
+    return encodedRedirect('success','/auth/signup','Account created successfully')
+}

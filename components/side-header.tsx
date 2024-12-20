@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Brain, Menu, Crown, LucideLayoutDashboard } from 'lucide-react'
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -17,24 +16,44 @@ import { FeedbackDialog } from "./feedback-dialog"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-
+type User = {
+  id: string
+  email?: string|undefined
+  user_metadata: {
+    avatar_url: string
+  }
+}
 export function SiteHeader() {
-  const { user, signOut } = useAuth()
+  const [user,setUser]=useState<User>()
   const supabase = createClient()
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null)
   const router=useRouter()
  
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (user === null) {
-        return;
+      const { data: {user} } = await supabase.auth.getUser();
+      if (user) {
+        const customUser: User = {
+          id: user.id,
+          email: user.email,
+          user_metadata: {
+            avatar_url: user.user_metadata.avatar_url || ''
+          }
+        };
+        setUser(customUser);
       }
-      const { data: subscription_status } = await supabase.from('users').select('subscription_status').eq('id', user.user?.id).single();
+      console.log(`user: ${user}`)
+      const { data: subscription_status } = await supabase.from('users').select('subscription_status').eq('id', user?.id).single();
       setSubscriptionStatus(subscription_status?.subscription_status);
     };
     fetchSubscriptionStatus();
   }, []);
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/signin')
+  }
+
 
   const MobileNavItems = () => (
     <>
@@ -57,7 +76,7 @@ export function SiteHeader() {
           </Link>
         </div>
         <div className="flex items-center space-x-4">
-          {user ? (
+          {user?.id ? (
             <>
               <div className="hidden md:flex items-center space-x-4">
                 <Button variant="ghost" asChild>
@@ -70,7 +89,7 @@ export function SiteHeader() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.user_metadata.avatar_url} alt={user.email} />
+                      <AvatarImage src={user?.user_metadata?.avatar_url} alt={user.email} />
                       <AvatarFallback>
                         {user.email?.charAt(0).toUpperCase()}
                       </AvatarFallback>
@@ -83,7 +102,7 @@ export function SiteHeader() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={()=>signOut()}>
+                  <DropdownMenuItem onClick={signOut}>
                     Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>

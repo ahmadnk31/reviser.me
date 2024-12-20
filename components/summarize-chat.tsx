@@ -42,12 +42,12 @@ export default function SummarizeChat({ onOpen, isOpen, id }: ChatPDFProps) {
         e.preventDefault();
         setLoading(true);
         setSummary("");  // Clear previous summary
-        
+
         const formData = new FormData(e.currentTarget);
         const data = {
             topic: formData.get("summaryTopic"),
         };
-    
+
         try {
             const response = await fetch("/api/quiz/summarize", {
                 method: "POST",
@@ -74,9 +74,9 @@ export default function SummarizeChat({ onOpen, isOpen, id }: ChatPDFProps) {
                 </AlertDialogHeader>
                 <Card className="p-6">
                     <form onSubmit={handleSummarize} className="space-y-4">
-                        <Input 
-                            name="summaryTopic" 
-                            placeholder="Enter topic to focus on (optional)" 
+                        <Input
+                            name="summaryTopic"
+                            placeholder="Enter topic to focus on (optional)"
                         />
 
                         <Button type="submit" disabled={loading}>
@@ -85,32 +85,32 @@ export default function SummarizeChat({ onOpen, isOpen, id }: ChatPDFProps) {
                     </form>
 
                     {summary && (
-                        <div>
-                            
-                            <div 
-  id="document-summary" 
-  className="mt-6 p-4 border rounded"
->
-  <ReactMarkdown>{summary}</ReactMarkdown>
-</div>
-<TextDownloadButton 
-  content={summary}
-  filename="document-summary.pdf"
-  title={`Summary of ${id}`}
-/>
-                        <Button 
-                        variant='outline' size='sm'
-                            onClick={handleCopy} 
-                            className="mt-4"
-                        >
-                            {copied ? "Copied!" : (
-                                <>
-                                    <Copy className="mr-2 size-4" />
-                                    Copy Summary
-                                </>
-                            )}
-                            
-                        </Button>
+                        <div className='flex items-center gap-2'>
+
+                            <div
+                                id="document-summary"
+                                className="mt-6 p-4 border rounded"
+                            >
+                                <ReactMarkdown>{summary}</ReactMarkdown>
+                            </div>
+                            <TextDownloadButton
+                                content={summary}
+                                filename="document-summary.pdf"
+                                title={`Summary of ${id}`}
+                            />
+                            <Button
+                                variant='outline' size='sm'
+                                onClick={handleCopy}
+                                className="mt-4"
+                            >
+                                {copied ? "Copied!" : (
+                                    <>
+                                        <Copy className="mr-2 size-4" />
+                                        Copy Summary
+                                    </>
+                                )}
+
+                            </Button>
                         </div>
                     )}
                 </Card>

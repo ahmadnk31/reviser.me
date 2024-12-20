@@ -26,11 +26,11 @@ export function CreateDeckDialog({ onDeckCreated }: CreateDeckDialogProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [loading, setLoading] = useState(false)
-  const { user } = useAuth()
   const { toast } = useToast()
   const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
+    const {data:{user}}=await supabase.auth.getUser()
     e.preventDefault()
     if (!user) {
       toast({

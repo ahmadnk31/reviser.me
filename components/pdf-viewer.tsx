@@ -23,10 +23,12 @@ import '@react-pdf-viewer/default-layout/lib/styles/index.css'
 import { Eye } from 'lucide-react'
 
 type PDFViewerProps = {
-  pdfUrl: string
+  pdfUrl: string,
+  text?: string
+  className?: string
 }
 
-export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
+export default function PDFViewer({ pdfUrl,text='open pdf',className }: PDFViewerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,9 +60,9 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" size='sm' className={className}>
             <Eye className="mr-2 size-4" />
-            Open PDF</Button>
+            {text}</Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <AlertDialogHeader>

@@ -1,23 +1,33 @@
-import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
+'use client'
+import { createClient } from "@/lib/supabase/client";
 import SubscriptionMessage from "../../../components/subscription-message";
 import { checkUserAccess } from "@/lib/check-access";
-export default async function GeneratorPage({children}:{
+import { useEffect, useState } from "react";
+export default function GeneratorPage({children}:{
     children:React.ReactNode
 }) {
-    const cookieStore=cookies()
-    const supabase= createClient(cookieStore)
-    const {data:{user}}=await supabase.auth.getUser()
-    const {data:credits}=await supabase.from('users').select('free_credits').eq('id',user?.id).single()
-    const hasAccess = user?.id ? await checkUserAccess(user.id) : false;
-    if (hasAccess === false) {
-        return (
-            <SubscriptionMessage/>
-        )
-    }
+    
+    const supabase = createClient();
+    const [hasAccess, setHasAccess] = useState<boolean>(false);
+    useEffect(() => {
+        const fetchHasAccess= async () => {
+            const { data: {user} } = await supabase.auth.getUser();
+            if (user === null) {
+                return;
+            }
+            if(user?.id){
+                const access=await checkUserAccess(user.id)
+                setHasAccess(access)
+            }
+        };
+        fetchHasAccess();
+    }, []);
+    console.log(`hasAccess from quiz`, hasAccess)
     return(
        <>
-        {children}
+        {
+            children
+        }
        </>
     )
 }

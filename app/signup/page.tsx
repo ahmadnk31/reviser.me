@@ -14,7 +14,7 @@ import { IconBrandGoogleFilled } from '@tabler/icons-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 
 export default function SignUpPage() {
-  const [email, setEmail] = useState("")
+   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -26,25 +26,37 @@ export default function SignUpPage() {
     setLoading(true)
 
     try {
+      // Add basic validation
+      if (password.length < 6) {
+        throw new Error("Password must be at least 6 characters long")
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: {
-            role: 'user'
-          }
-        },
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+        }
       })
 
       if (error) throw error
+
+      if (data?.user?.identities?.length === 0) {
+        toast({
+          title: "Account exists",
+          description: "An account with this email already exists. Please sign in.",
+          variant: "destructive",
+        })
+        router.push("/login")
+        return
+      }
 
       if (data.user) {
         toast({
           title: "Success!",
           description: "Please check your email to confirm your account.",
-        });
-        router.push("/onboarding");
+        })
+        // Don't redirect immediately - wait for email confirmation
       }
     } catch (error: any) {
       toast({
@@ -59,16 +71,18 @@ export default function SignUpPage() {
 
   const handleSignUpWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       })
 
       if (error) throw error
-
-      router.push("/onboarding")
     } catch (error: any) {
       toast({
         title: "Error",
@@ -77,7 +91,6 @@ export default function SignUpPage() {
       })
     }
   }
-
   return (
     <div className="container flex py-8 w-screen flex-col items-center justify-center bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
       <motion.div

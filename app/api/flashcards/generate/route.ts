@@ -4,7 +4,6 @@ import { generateFlashcardsPrompt } from '@/lib/openai';
 import type { FlashcardResponse, APIError } from '@/lib/types';
 import { cookies } from 'next/headers';
 
-export const runtime = 'edge';
 
 export async function POST(req: Request) {
   const cookieStore=cookies()
@@ -40,6 +39,7 @@ export async function POST(req: Request) {
 
     // Generate flashcards
     const data = await generateFlashcardsPrompt(topic, count);
+    console.log('Flashcards generated:', data);
     const {data:free_credits}=await supabase.from('users').select('free_credits').eq('id',user.id).single()
     if(free_credits?.free_credits>0&&data.flashcards.length>0){
       await supabase.from('users').update({free_credits:free_credits?.free_credits-1}).eq('id',user.id)

@@ -10,12 +10,13 @@ import {
 import { FileUploader } from "./document-quiz-upload";
 import { UploadCloud } from "lucide-react";
 import { Card } from "./ui/card";
+import { cn } from "@/lib/utils";
 
-  export default function CreateNew() {
+  export default function CreateNew({active}:{active:boolean}) {
     return (
       <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Card className="p-4 flex items-center justify-center cursor-pointer">
+        <AlertDialogTrigger asChild disabled={active}>
+          <Card className={cn("p-4 flex items-center justify-center cursor-pointer", active && "pointer-events-none opacity-50")}>
            <UploadCloud className="size-8 text-muted-foreground" />
             </Card>
         </AlertDialogTrigger>
@@ -23,7 +24,7 @@ import { Card } from "./ui/card";
           <AlertDialogHeader>
             <AlertDialogTitle>Create New</AlertDialogTitle>
           </AlertDialogHeader>
-          <FileUploader />
+          <FileUploader active={active} />
           <AlertDialogFooter>
           <AlertDialogCancel>
               Cancel

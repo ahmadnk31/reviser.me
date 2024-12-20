@@ -8,12 +8,14 @@ import { Progress } from "@/components/ui/progress"
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import {toast} from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface FileWithPreview extends File {
   preview: string;
+
 }
 
-export function FileUploader() {
+export function FileUploader({active}:{active:boolean}) {
   const [files, setFiles] = useState<FileWithPreview[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -26,6 +28,7 @@ export function FileUploader() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    disabled: active,
     accept: {
       'image/*': [],
       'application/pdf': []
@@ -85,16 +88,19 @@ export function FileUploader() {
     }
 
   return (
-    <div className="max-w-md mx-auto p-6 rounded-lg shadow-md">
+    <div className={cn('max-w-md mx-auto p-6 rounded-lg shadow-md ', active && 'opacity-50')}>
       <div
+    
         {...getRootProps()}
         className={`p-10 border-2 border-dashed rounded-md text-center cursor-pointer transition-colors
-          ${isDragActive ? 'border-primary bg-primary/10' : 'border-gray-300 hover:border-primary'}`}
+          ${isDragActive ? 'border-primary bg-primary/10' : 'border-gray-300 hover:border-primary '} ${active && 'pointer-events-none'}`}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} disabled={active} />
         <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
         <p className="mt-2 text-sm text-gray-600">
-          Drag 'n' drop some files here, or click to select files
+          {
+            active? (<span className='text-destructive'>Please upgrade your plan to use this feature</span>):'Drag and drop your files here or click to browse'
+          }
         </p>
         <p className="mt-1 text-xs text-gray-500">
           (Only images and PDF files will be accepted)

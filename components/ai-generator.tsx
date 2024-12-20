@@ -66,6 +66,7 @@ export function AIGenerator({ onFlashcardsGenerated }: AIGeneratorProps) {
       });
 
       const data = await response.json();
+      console.log('Flashcards generated:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate flashcards');

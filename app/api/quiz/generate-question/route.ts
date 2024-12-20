@@ -4,6 +4,7 @@ import { ChatOpenAI } from "@langchain/openai";
  import { StringOutputParser } from "@langchain/core/output_parsers";
   import { cookies } from 'next/headers'; 
 import { NextResponse } from 'next/server';
+import { generateQuestionsPDF } from '@/lib/pdf-generator';
 // types/index.ts
 export interface Question {
     question: string;
@@ -95,16 +96,26 @@ export interface Question {
         { status: 500 }
       );
     }
-  
+    const pdfResult = await generateQuestionsPDF(parsedQuestions.questions, documentId);
       // Store in Supabase
       await supabase.from('document_questions').insert({
         document_id: documentId,
         questions: parsedQuestions,
-        metadata: { type: questionType, difficulty: difficultyLevel, topic }
+        pdf_link: pdfResult.fullUrl,
+        metadata: { 
+          type: questionType, 
+          difficulty: difficultyLevel, 
+          topic,
+          pdf_filename: pdfResult.filename
+        }
       });
       
      
-      return NextResponse.json(parsedQuestions);
+      return NextResponse.json({
+        questions:parsedQuestions.questions,
+        fileUrl:pdfResult.fullUrl,
+        filename:pdfResult.filename
+      });
   
     } catch (error) {
       console.error('Error:', error);

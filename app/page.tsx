@@ -16,16 +16,19 @@ import { HowItWorksVideo } from '@/components/how-it-works-video';
 export default function Home() {
   const supabase=createClient()
   const router=useRouter()
+  const [userId, setUserId] = useState<string | null>(null)
   useEffect(() => {
     const fetchUserId = async () => {
       const { data:{user} } = await supabase.auth.getUser()
       if(user?.id){
-        return router.push('/dashboard')
+        setUserId(user.id)
       }
     };
     fetchUserId();
   }, []);
-  
+  if(userId){
+    router.push('/dashboard')
+  }
 
   return (
     <div className="flex flex-col">

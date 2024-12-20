@@ -11,20 +11,45 @@ import { createClient } from "@/lib/supabase/client"
 import { Brain} from "lucide-react"
 import { AIGenerator } from "@/components/ai-generator"
 import type { Deck } from "@/lib/types"
-
+type User = {
+  id: string
+  email: string
+  user_metadata: {
+    avatar_url: string
+  }
+}
 export default function DashboardPage() {
   const [decks, setDecks] = useState<Deck[]>([])
   const [loading, setLoading] = useState(true)
-  const { user } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClient()
+  const [user, setUser] = useState<User | null>(null)
+
 
   useEffect(() => {
-    if (user) {
-      fetchDecks()
+    const fetchUser = async () => {
+      const { data:{user}, error } = await supabase.auth.getUser()
+
+      if (error) {
+        console.error("Error fetching user:", error)
+        return
+      }
+
+      if (user) {
+        setUser({
+          id: user.id,
+          email: user.email || "",
+          user_metadata: {
+            avatar_url: user.user_metadata?.avatar_url || "",
+          },
+        })
+      }
     }
-  }, [user])
+    fetchUser()
+  }, [])
+
+  console.log(`user: ${user}`)
 
   const fetchDecks = async () => {
     if (!user) return
@@ -35,7 +60,7 @@ export default function DashboardPage() {
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-
+        console.log(data)
       if (error) throw error
 
       setDecks(data || [])
@@ -50,7 +75,14 @@ export default function DashboardPage() {
       setLoading(false)
     }
   }
+useEffect(() => {
+    if (user) {
+      fetchDecks()
+    }
+  }
+, [user])
 
+console.log(`decks: ${decks}`)
   const handleDeckCreated = (newDeck: Deck) => {
     setDecks((prev) => [newDeck, ...prev])
   }

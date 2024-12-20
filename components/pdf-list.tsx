@@ -15,7 +15,7 @@ interface PDFDocument {
     file_url: string;
   }
 
-export function PDFList() {
+export function PDFList({active}: {active: boolean}) {
     const [documents, setDocuments] = useState<PDFDocument[]>([]);
     const [loading, setLoading] = useState(true);
     const supabase = createClient();
@@ -65,7 +65,7 @@ export function PDFList() {
                             </p>
                         </div>
                     </div>
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-2 items-center flex-wrap">
                         <PDFViewer 
                             pdfUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/quiz/${doc.file_url}`} 
                         />
@@ -74,12 +74,16 @@ export function PDFList() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenChatPDF(doc.id)}
+                            disabled={active}
+                            aria-disabled={active}
                         >
                             <List className="h-4 w-4 mr-2" />
                             Questions
                         </Button>
                         
                         <Button
+                            disabled={active}
+                            aria-disabled={active}
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenSummarizeChat(doc.id)}
@@ -103,7 +107,7 @@ export function PDFList() {
                 id={selectedDocumentId} 
             />
 
-            <CreateNew />
+            <CreateNew active={active}/>
 
             {loading && (
                 <div className="text-center col-span-full">

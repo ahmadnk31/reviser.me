@@ -29,15 +29,21 @@ export function DeckStats({ deckId }: DeckStatsProps) {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
-  const { user } = useAuth()
-  const supabase = createClient()
 
+  const supabase = createClient()
+  const [userId, setUserId] = useState<string | null>(null)
   useEffect(() => {
-    if (user) {
+    const fetchUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserId(user?.id ?? null)
+    }
+    fetchUserId()
+  }, [])
+  useEffect(() => {
+    if (userId) {
       fetchStats()
     }
-  }, [deckId, user])
+  }, [deckId, userId])
 
   const fetchStats = async () => {
     setLoading(true)
@@ -57,7 +63,7 @@ export function DeckStats({ deckId }: DeckStatsProps) {
         .from("reviews")
         .select("*")
         .in("flashcard_id", flashcards.map(f => f.id))
-        .eq("user_id", user?.id)
+        .eq("user_id", userId)
 
       if (reviewsError) throw reviewsError
 
