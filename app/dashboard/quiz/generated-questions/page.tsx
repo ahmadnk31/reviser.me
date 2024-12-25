@@ -1,15 +1,23 @@
 'use client'
 import PDFViewer from '@/components/pdf-viewer';
+import { QuizContainer } from '@/components/quiz-container';
+import { AlertTitle } from '@/components/ui/alert';
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client';
+import { Question } from '@/lib/types';
 import { IconFileTypePdf } from '@tabler/icons-react';
+import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type Document = {
   id: string
   document_id: string
   pdf_link: string
+  questions:{
+    questions: Question[]
+  },
   metadata: {
     type: string
   },
@@ -91,10 +99,10 @@ export default function GeneratedQuestionsPage() {
 
   if (loading) return <div>Loading...</div>
   if (error) return <div>Error: {error}</div>
-  console.log(`Documents:`, documents)
+  console.log(`Documents:`, documents.map(d => d.questions))
   return (
     <div className="container py-4">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {documents?.map((document, i) => (
           <Card key={i} className="space-y-4 flex flex-col justify-between">
             <CardHeader className='text-center'>
@@ -103,11 +111,27 @@ export default function GeneratedQuestionsPage() {
               </CardTitle>
             </CardHeader>
             <CardFooter className='flex flex-col gap-4'>
+              <div className='flex justify-between gap-4'>
               <PDFViewer 
                 className='w-full' 
                 text='Open your PDF' 
                 pdfUrl={document.pdf_link} 
               />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button >Retest</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader className='relative'>
+                    <AlertTitle>Retry</AlertTitle>
+                    <AlertDialogCancel className='absolute -top-5 -right-2 p-0 size-6 text-muted-foreground border-none  rounded-full'>
+                      <X className='size-4'/>
+                    </AlertDialogCancel>
+                  </AlertDialogHeader>
+                  <QuizContainer documentId={document.document_id} questions={document.questions.questions} />
+                </AlertDialogContent>
+              </AlertDialog>
+              </div>
               <span className="text-sm text-gray-500 line-clamp-1">{`
                 ${new Date(document.documents.created_at).toLocaleDateString()} ${new Date(document.documents.created_at).toLocaleTimeString()}
               `}</span>
