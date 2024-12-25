@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     
     const {data,error}=await supabase.from("documents").insert([
       {
-        document_id: documentId,
+        id: documentId,
         user_id: user?.id,
         content:chunks.map((doc) => doc.pageContent),
         title:title,
