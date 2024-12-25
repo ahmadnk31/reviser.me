@@ -121,14 +121,16 @@ export default function GeneratedQuestionsPage() {
                 <AlertDialogTrigger asChild>
                   <Button >Retest</Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className='max-h-[80vh] overflow-y-auto'>
                   <AlertDialogHeader className='relative'>
                     <AlertTitle>Retry</AlertTitle>
                     <AlertDialogCancel className='absolute -top-5 -right-2 p-0 size-6 text-muted-foreground border-none  rounded-full'>
                       <X className='size-4'/>
                     </AlertDialogCancel>
                   </AlertDialogHeader>
+                  
                   <QuizContainer documentId={document.document_id} questions={document.questions.questions} />
+                 
                 </AlertDialogContent>
               </AlertDialog>
               </div>
