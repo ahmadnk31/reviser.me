@@ -4,6 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { cookies } from 'next/headers'
 import { v4 as uuidv4 } from 'uuid';
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
+import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
+import { EPubLoader } from "@langchain/community/document_loaders/fs/epub";
+import { PPTXLoader } from "@langchain/community/document_loaders/fs/pptx";
+import { TextLoader } from "langchain/document_loaders/fs/text";
 import {
   RunnableSequence,
 } from "@langchain/core/runnables";
@@ -17,8 +21,29 @@ export async function POST(req: Request) {
   const formData = await req.formData();
     const file = formData.get("file") as File;
     const fileName=formData.get("fileName") as string
-  const loader = new PDFLoader(file);
-  const docs = await loader.load();
+
+  const isPdfFile=file.name.endsWith('.pdf')
+  const isDocxFile=file.name.endsWith('.docx')
+  const isEpubFile=file.name.endsWith('.epub')
+  const isPptxFile=file.name.endsWith('.pptx')
+  const isTxtFile=file.name.endsWith('.txt')
+  let loader;
+  if(isPdfFile){
+    loader=new PDFLoader(file)
+  }
+  if(isDocxFile){
+    loader=new DocxLoader(file)
+  }
+  if(isEpubFile){
+    loader=new EPubLoader(URL.createObjectURL(file))
+  }
+  if(isPptxFile){
+    loader=new PPTXLoader(file)
+  }
+  if(isTxtFile){
+    loader=new TextLoader(file)
+  }
+  const docs = await loader?.load();
   const cookieStore=cookies()
   const supabase= createClient(cookieStore)
   const {data: {user}}=await supabase.auth.getUser()
@@ -35,6 +60,9 @@ export async function POST(req: Request) {
     chunkSize: 100,
     chunkOverlap: 0,
   });
+  if (!docs) {
+    return new Response("No documents found", { status: 400 });
+  }
   const chunks = await textSplitter.splitDocuments(docs);
   
   const documentsEmbeddings = await Promise.all(

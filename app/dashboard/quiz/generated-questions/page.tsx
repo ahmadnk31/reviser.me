@@ -1,4 +1,6 @@
 'use client'
+import DocumentViewer from '@/components/document-viewer';
+import { EpubViewer } from '@/components/epub-viewer';
 import PDFViewer from '@/components/pdf-viewer';
 import { QuizContainer } from '@/components/quiz-container';
 import { AlertTitle } from '@/components/ui/alert';
@@ -15,7 +17,7 @@ type Document = {
   id: string
   document_id: string
   pdf_link: string
-  questions:{
+  questions: {
     questions: Question[]
   },
   metadata: {
@@ -43,7 +45,7 @@ export default function GeneratedQuestionsPage() {
       try {
         setLoading(true)
         const { data: { user } } = await supabase.auth.getUser()
-        
+
         if (!user) {
           setError('No user found')
           return
@@ -71,7 +73,7 @@ export default function GeneratedQuestionsPage() {
 
         if (documentQuestions) {
           // Transform the data to match your component's expectations
-          const transformedData = documentQuestions.flatMap(doc => 
+          const transformedData = documentQuestions.flatMap(doc =>
             doc.document_questions.map(question => ({
               ...question,
               documents: {
@@ -93,7 +95,7 @@ export default function GeneratedQuestionsPage() {
         setLoading(false)
       }
     }
-    
+
     fetchDocuments()
   }, [])
 
@@ -105,36 +107,41 @@ export default function GeneratedQuestionsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {documents?.map((document, i) => (
           <Card key={i} className="space-y-4 flex flex-col justify-between">
-            <CardHeader className='text-center'>
+            <CardHeader className=''>
               <CardTitle className='text-lg md:text-xl'>
                 {document.metadata.type}
               </CardTitle>
             </CardHeader>
-            <CardFooter className='flex flex-col gap-4'>
-              <div className='flex justify-between gap-4'>
-              <PDFViewer 
-                className='w-full' 
-                text='Open your PDF' 
-                pdfUrl={document.pdf_link} 
-              />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button >Retest</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className='max-h-[80vh] overflow-y-auto'>
-                  <AlertDialogHeader className='relative'>
-                    <AlertTitle>Retry</AlertTitle>
-                    <AlertDialogCancel className='absolute -top-5 -right-2 p-0 size-6 text-muted-foreground border-none  rounded-full'>
-                      <X className='size-4'/>
-                    </AlertDialogCancel>
-                  </AlertDialogHeader>
-                  
-                  <QuizContainer documentId={document.document_id} questions={document.questions.questions} />
-                 
-                </AlertDialogContent>
-              </AlertDialog>
+            <CardFooter className='flex flex-col gap-4 w-full text-start items-start'>
+              <div className='flex justify-between min-w-full gap-4'>
+                {document.pdf_link.endsWith('.pdf') ? (
+                  <PDFViewer
+                  className='w-full '
+                    pdfUrl={document.pdf_link}
+                  />
+                ) : document.pdf_link.endsWith('.epub') ? (
+                  <EpubViewer src={document.pdf_link} />
+                ) : (
+                  <DocumentViewer src={document.pdf_link} />
+                )}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button className='w-full' size='sm'>Retest</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className='max-h-[80vh] overflow-y-auto'>
+                    <AlertDialogHeader className='relative'>
+                      <AlertTitle>Retry</AlertTitle>
+                      <AlertDialogCancel className='absolute -top-5 -right-2 p-0 size-6 text-muted-foreground border-none  rounded-full'>
+                        <X className='size-4' />
+                      </AlertDialogCancel>
+                    </AlertDialogHeader>
+
+                    <QuizContainer documentId={document.document_id} questions={document.questions.questions} />
+
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
-              <span className="text-sm text-gray-500 line-clamp-1">{`
+              <span className="text-sm text-gray-500 text-start line-clamp-1">{`
                 ${new Date(document.documents.created_at).toLocaleDateString()} ${new Date(document.documents.created_at).toLocaleTimeString()}
               `}</span>
             </CardFooter>

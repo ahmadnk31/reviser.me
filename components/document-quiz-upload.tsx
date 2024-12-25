@@ -30,8 +30,10 @@ export function FileUploader({active}:{active:boolean}) {
     onDrop,
     disabled: active,
     accept: {
-      'image/*': [],
-      'application/pdf': []
+      'application/docx':['.docx'],
+      'application/pdf': ['.pdf'],
+      'application/epub': ['.epub'],
+      'application/pptx': ['.pptx']
     }
   })
   const router=useRouter()
@@ -103,7 +105,7 @@ export function FileUploader({active}:{active:boolean}) {
           }
         </p>
         <p className="mt-1 text-xs text-gray-500">
-          (Only images and PDF files will be accepted)
+          (Only Docx, Epub,PPTX and PDF files will be accepted)
         </p>
       </div>
 

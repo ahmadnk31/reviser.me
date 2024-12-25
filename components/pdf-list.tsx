@@ -7,6 +7,8 @@ import ChatPDF from './chat-pdf';
 import SummarizeChat from './summarize-chat';
 import PDFViewer from './pdf-viewer';
 import CreateNew from './create-new';
+import DocumentViewer from './document-viewer';
+import { EpubViewer } from './epub-viewer';
 
 interface PDFDocument {
     id: string;
@@ -66,9 +68,24 @@ export function PDFList({active}: {active: boolean}) {
                         </div>
                     </div>
                     <div className="flex gap-2 items-center flex-wrap">
-                        <PDFViewer 
-                            pdfUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/quiz/${doc.file_url}`} 
-                        />
+                    
+                            
+                           {
+                             doc.file_url.endsWith('.pdf') ?(
+                                <PDFViewer 
+                                    pdfUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/quiz/${doc.file_url}`} 
+                                />
+                            ):doc.file_url.endsWith('.epub')?(
+                                <EpubViewer 
+                                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/quiz/${doc.file_url}`} 
+                                />
+                            ):(
+                                <DocumentViewer src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/quiz/${doc.file_url}`} />
+                            )
+                           }
+                           
+                    
+                        
                         
                         <Button
                             variant="outline"
