@@ -105,7 +105,7 @@ export function FileUploader({active}:{active:boolean}) {
           }
         </p>
         <p className="mt-1 text-xs text-gray-500">
-          (Only Docx, Epub,PPTX and PDF files will be accepted)
+          (Only Docx, Epub,PPTX, TXT and PDF files will be accepted)
         </p>
       </div>
 

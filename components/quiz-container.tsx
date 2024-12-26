@@ -17,6 +17,7 @@ import { IconBrandFacebook, IconBrandX } from '@tabler/icons-react';
 interface Props {
   questions: Question[];
   documentId: string;
+  question_document_id?:string
 }
 
 interface AttemptRecord {
@@ -66,7 +67,7 @@ const ShareButton = ({ platform, color, score, totalQuestions }: ShareButtonProp
 };
 
 
-export function QuizContainer({ questions, documentId }: Props) {
+export function QuizContainer({ questions, documentId,question_document_id }: Props) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -83,7 +84,7 @@ export function QuizContainer({ questions, documentId }: Props) {
 
   useEffect(() => {
     fetchAttemptRecord();
-  }, [documentId]);
+  }, [question_document_id]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -108,7 +109,7 @@ export function QuizContainer({ questions, documentId }: Props) {
         .from('quiz_attempts')
         .select('*')
         .eq('user_id', user.id)
-        .eq('document_id', documentId)
+        .eq('document_id', question_document_id)
         .single();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
@@ -119,7 +120,7 @@ export function QuizContainer({ questions, documentId }: Props) {
         // Create new attempt record
         const newAttempt: AttemptRecord = {
           user_id: user.id,
-          document_id: documentId,
+          document_id: question_document_id||'',
           attempt_count: 0,
           last_attempt_time: new Date().toISOString(),
           block_end_time: null

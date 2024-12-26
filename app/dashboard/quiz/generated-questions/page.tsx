@@ -101,7 +101,7 @@ export default function GeneratedQuestionsPage() {
 
   if (loading) return <div>Loading...</div>
   if (error) return <div>Error: {error}</div>
-  console.log(`Documents:`, documents.map(d => d.questions))
+  console.log(`Documents:`, documents)
   return (
     <div className="container py-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -136,7 +136,7 @@ export default function GeneratedQuestionsPage() {
                       </AlertDialogCancel>
                     </AlertDialogHeader>
 
-                    <QuizContainer documentId={document.document_id} questions={document.questions.questions} />
+                    <QuizContainer documentId={document.document_id} question_document_id={document.id} questions={document.questions.questions} />
 
                   </AlertDialogContent>
                 </AlertDialog>

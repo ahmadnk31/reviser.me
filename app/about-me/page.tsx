@@ -33,8 +33,8 @@ export default function AboutPage() {
         <section className="text-center space-y-4">
           <h2 className="text-3xl font-semibold">Our Mission</h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            At [Your SaaS Name], we believe in [core belief]. Our goal is to [mission statement].
-            We're committed to delivering innovative solutions that [key benefit for customers].
+            At Reviser AI, we believe in intelligence and creativity. Our goal is to simplify the study process in order to help students memorize a topic efficiently than ever.
+            We're committed to delivering innovative solutions that ease the learning process and help students achieve their full potential.
           </p>
         </section>
 
