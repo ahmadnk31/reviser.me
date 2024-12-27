@@ -34,7 +34,7 @@ export async function resetPasswordAction(formData:FormData){
     const cookieStore=cookies()
     const supabase=await createClient(cookieStore)
     const password=formData.get('password') as string
-    const confirmPassword=formData.get('confirmPassword') as string
+    const confirmPassword=formData.get('confirm-password') as string
     if(!password || !confirmPassword){
         return encodedRedirect('error','/account/update-password','Password is required')
     }
