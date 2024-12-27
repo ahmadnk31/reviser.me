@@ -9,14 +9,8 @@ export async function forgotPasswordAction(formData: FormData) {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
     const email = formData.get('email') as string
-    const origin = (await headers()).get('origin')
-    const forwardedHost = (await headers()).get('x-forwarded-host')
-    const isLocalEnv = process.env.NODE_ENV === "development"
+
     
-    let baseUrl = origin
-    if (!isLocalEnv && forwardedHost) {
-      baseUrl = `https://${forwardedHost}`
-    }
 
     if (!email) {
         return encodedRedirect('error', '/forgot-password', 'Email is required')
@@ -24,21 +18,10 @@ export async function forgotPasswordAction(formData: FormData) {
 
     try {
         // Generate the PKCE code verifier
-        const codeVerifier = crypto.randomUUID();
         
         // Store the code verifier in a cookie
-        await (await cookieStore).set('code_verifier', codeVerifier, {
-            path: '/',
-            secure: process.env.NODE_ENV === 'production',
-            httpOnly: true,
-            sameSite: 'lax',
-            maxAge: 60 * 60 // 1 hour
-        });
-
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${baseUrl}/auth/callback?redirect_to=/reset-password`,
-            captchaToken:codeVerifier// Add the code verifier here
-        })
+        
+        const { data,error } = await supabase.auth.resetPasswordForEmail(email)
         
         if (error) throw error
     } catch (err: any) {
@@ -53,16 +36,16 @@ export async function resetPasswordAction(formData:FormData){
     const password=formData.get('password') as string
     const confirmPassword=formData.get('confirmPassword') as string
     if(!password || !confirmPassword){
-        return encodedRedirect('error','/reset-password','Password is required')
+        return encodedRedirect('error','/account/update-password','Password is required')
     }
     if(password!==confirmPassword){
-        return encodedRedirect('error','/reset-password','Passwords do not match')
+        return encodedRedirect('error','/account/update-password','Passwords do not match')
     }
     const {error}=await supabase.auth.updateUser({password})
     if(error){
-        return encodedRedirect('error','/reset-password',error.message)
+        return encodedRedirect('error','/account/update-password',error.message)
     }
-    return encodedRedirect('success','/reset-password','Password reset successfully')
+    return encodedRedirect('success','/account/update-password','Password reset successfully')
 }
 
 export async function signOutAction(){
@@ -83,11 +66,13 @@ export async function signUpAction(formData:FormData){
     const email=formData.get('email') as string
     const password=formData.get('password') as string
     if(!email || !password){
-        return encodedRedirect('error','/auth/signup','Email and password are required')
+        return encodedRedirect('error','/signup','Email and password are required')
     }
     const {error}=await supabase.auth.signUp({email,password})
     if(error){
-        return encodedRedirect('error','/auth/signup',error.message)
+        return encodedRedirect('error','/signup',error.message)
     }
-    return encodedRedirect('success','/auth/signup','Account created successfully')
+    return encodedRedirect('success','/signup','Account created successfully')
 }
+
+

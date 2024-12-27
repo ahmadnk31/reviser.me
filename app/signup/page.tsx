@@ -35,7 +35,7 @@ export default function SignUpPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/confirm-email`,
+          emailRedirectTo: `${window.location.origin}/onboarding`,
         }
       })
 
@@ -83,6 +83,9 @@ export default function SignUpPage() {
       })
 
       if (error) throw error
+      if (data.url) {
+        router.push(data.url) // use the redirect API for your server framework
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -90,6 +93,7 @@ export default function SignUpPage() {
         variant: "destructive",
       })
     }
+    
   }
   return (
     <div className="container flex py-8 w-screen flex-col items-center justify-center bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
