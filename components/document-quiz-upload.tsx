@@ -73,6 +73,7 @@ export function FileUploader({active}:{active:boolean}) {
         }
         if(response.ok){
           router.push('/dashboard/quiz/chats')
+          router.refresh()
           toast.success('File uploaded successfully')
         }
         const result = await response.json()
