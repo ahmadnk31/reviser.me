@@ -32,7 +32,7 @@ export function FileUploader({active}:{active:boolean}) {
     accept: {
       'application/docx':['.docx'],
       'application/pdf': ['.pdf'],
-      'application/epub': ['.epub'],
+      'application/txt': ['.txt'],
       'application/pptx': ['.pptx']
     }
   })
@@ -105,7 +105,7 @@ export function FileUploader({active}:{active:boolean}) {
           }
         </p>
         <p className="mt-1 text-xs text-gray-500">
-          (Only Docx, Epub,PPTX, TXT and PDF files will be accepted)
+          (Only Docx,PPTX, TXT and PDF files will be accepted)
         </p>
       </div>
 

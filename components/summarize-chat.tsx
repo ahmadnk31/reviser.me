@@ -72,7 +72,7 @@ export default function SummarizeChat({ onOpen, isOpen, id }: ChatPDFProps) {
                         <X className="size-4" />
                     </AlertDialogCancel>
                 </AlertDialogHeader>
-                <Card className="p-6">
+                <Card className="p-0 border-0">
                     <form onSubmit={handleSummarize} className="space-y-4">
                         <Input
                             name="summaryTopic"
@@ -85,7 +85,7 @@ export default function SummarizeChat({ onOpen, isOpen, id }: ChatPDFProps) {
                     </form>
 
                     {summary && (
-                        <div className='flex items-center gap-2'>
+                        <div className='flex flex-col items-center gap-2'>
 
                             <div
                                 id="document-summary"
@@ -93,6 +93,7 @@ export default function SummarizeChat({ onOpen, isOpen, id }: ChatPDFProps) {
                             >
                                 <ReactMarkdown>{summary}</ReactMarkdown>
                             </div>
+                            <div className='flex gap-2 items-center'>
                             <TextDownloadButton
                                 content={summary}
                                 filename="document-summary.pdf"
@@ -101,7 +102,7 @@ export default function SummarizeChat({ onOpen, isOpen, id }: ChatPDFProps) {
                             <Button
                                 variant='outline' size='sm'
                                 onClick={handleCopy}
-                                className="mt-4"
+                                className=""
                             >
                                 {copied ? "Copied!" : (
                                     <>
@@ -111,6 +112,7 @@ export default function SummarizeChat({ onOpen, isOpen, id }: ChatPDFProps) {
                                 )}
 
                             </Button>
+                            </div>
                         </div>
                     )}
                 </Card>

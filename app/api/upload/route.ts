@@ -34,9 +34,7 @@ export async function POST(req: Request) {
   if(isDocxFile){
     loader=new DocxLoader(file)
   }
-  if(isEpubFile){
-    loader=new EPubLoader(URL.createObjectURL(file))
-  }
+
   if(isPptxFile){
     loader=new PPTXLoader(file)
   }
