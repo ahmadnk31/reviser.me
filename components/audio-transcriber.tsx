@@ -13,15 +13,19 @@ export default function SystemAudioTranscription() {
   const [error, setError] = useState<string | null>(null)
   const [audioSource, setAudioSource] = useState<'microphone' | 'system' | 'both'>('microphone')
   const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
-  const processorRef = useRef<ScriptProcessorNode | null>(null)
-  const audioChunksRef = useRef<Float32Array[]>([])
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animationFrameRef = useRef<number>()
+  const audioChunksRef = useRef<Blob[]>([])
   const [title, setTitle] = useState('')
   const [savedTranscripts, setSavedTranscripts] = useState<Array<{title: string, text: string, date: string}>>([])
+  const [visualizerType, setVisualizerType] = useState<'waveform' | 'bars'>('waveform')
+
   const handleCopyTranscript = () => {
     navigator.clipboard.writeText(transcript)
       .then(() => {
-        // Show temporary success message
         setError('Copied to clipboard!')
         setTimeout(() => setError(null), 2000)
       })
@@ -52,31 +56,146 @@ export default function SystemAudioTranscription() {
 
     setSavedTranscripts([...savedTranscripts, newTranscript])
     setTitle('')
-    // Optional: Clear current transcript
-    // setTranscript('')
+    setTranscript('')
   }
+
+  const drawWaveform = (analyser: AnalyserNode, canvas: HTMLCanvasElement) => {
+    const bufferLength = analyser.frequencyBinCount
+    const dataArray = new Uint8Array(bufferLength)
+    const ctx = canvas.getContext('2d')!
+    
+    const draw = () => {
+      const width = canvas.width
+      const height = canvas.height
+      
+      analyser.getByteTimeDomainData(dataArray)
+      
+      ctx.fillStyle = 'rgb(20, 20, 20)'
+      ctx.fillRect(0, 0, width, height)
+      
+      ctx.lineWidth = 2
+      ctx.strokeStyle = 'rgb(0, 255, 0)'
+      ctx.beginPath()
+      
+      const sliceWidth = width / bufferLength
+      let x = 0
+      
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0
+        const y = v * height / 2
+        
+        if (i === 0) {
+          ctx.moveTo(x, y)
+        } else {
+          ctx.lineTo(x, y)
+        }
+        
+        x += sliceWidth
+      }
+      
+      ctx.lineTo(width, height / 2)
+      ctx.stroke()
+      
+      animationFrameRef.current = requestAnimationFrame(draw)
+    }
+    
+    draw()
+  }
+
+  const drawBars = (analyser: AnalyserNode, canvas: HTMLCanvasElement) => {
+    const bufferLength = analyser.frequencyBinCount
+    const dataArray = new Uint8Array(bufferLength)
+    const ctx = canvas.getContext('2d')!
+    
+    const draw = () => {
+      const width = canvas.width
+      const height = canvas.height
+      
+      analyser.getByteFrequencyData(dataArray)
+      
+      ctx.fillStyle = 'rgb(20, 20, 20)'
+      ctx.fillRect(0, 0, width, height)
+      
+      const barWidth = (width / bufferLength) * 2.5
+      let x = 0
+      
+      for (let i = 0; i < bufferLength; i++) {
+        const barHeight = (dataArray[i] / 255) * height
+        
+        const r = barHeight + 25
+        const g = 250
+        const b = 50
+        
+        ctx.fillStyle = `rgb(${r},${g},${b})`
+        ctx.fillRect(x, height - barHeight, barWidth, barHeight)
+        
+        x += barWidth + 1
+      }
+      
+      animationFrameRef.current = requestAnimationFrame(draw)
+    }
+    
+    draw()
+  }
+
   useEffect(() => {
     return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop()
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop())
+      }
       if (audioContextRef.current) {
         audioContextRef.current.close()
       }
     }
   }, [])
 
+  const startVisualization = (stream: MediaStream) => {
+    if (!canvasRef.current) return
+
+    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+    analyserRef.current = audioContextRef.current.createAnalyser()
+    
+    const source = audioContextRef.current.createMediaStreamSource(stream)
+    source.connect(analyserRef.current)
+    
+    analyserRef.current.fftSize = 2048
+    
+    if (visualizerType === 'waveform') {
+      drawWaveform(analyserRef.current, canvasRef.current)
+    } else {
+      drawBars(analyserRef.current, canvasRef.current)
+    }
+  }
+
   const getMicrophoneStream = async () => {
-    return navigator.mediaDevices.getUserMedia({ audio: true })
+    try {
+      return await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        }
+      })
+    } catch (err) {
+      console.error('Microphone access error:', err)
+      throw new Error('Microphone access denied')
+    }
   }
 
   const getSystemAudioStream = async () => {
-    // @ts-ignore - TypeScript doesn't recognize getDisplayMedia options
-    return navigator.mediaDevices.getDisplayMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        sampleRate: 44100,
-      },
-      video: true
-    })
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      return stream
+    } catch (err) {
+      console.error('System audio access error:', err)
+      throw new Error('System audio access denied')
+    }
   }
 
   const startRecording = async () => {
@@ -84,25 +203,12 @@ export default function SystemAudioTranscription() {
       setError(null)
       let stream: MediaStream | null = null
 
-      // Get the appropriate audio stream based on selection
       if (audioSource === 'microphone') {
         stream = await getMicrophoneStream()
       } else if (audioSource === 'system') {
         stream = await getSystemAudioStream()
       } else if (audioSource === 'both') {
-        const micStream = await getMicrophoneStream()
-        const sysStream = await getSystemAudioStream()
-        
-        // Combine both audio streams
-        const audioContext = new AudioContext()
-        const micSource = audioContext.createMediaStreamSource(micStream)
-        const sysSource = audioContext.createMediaStreamSource(sysStream)
-        const destination = audioContext.createMediaStreamDestination()
-        
-        micSource.connect(destination)
-        sysSource.connect(destination)
-        
-        stream = destination.stream
+        stream = await getMicrophoneStream()
       }
 
       if (!stream) {
@@ -110,18 +216,25 @@ export default function SystemAudioTranscription() {
       }
 
       mediaStreamRef.current = stream
-      audioContextRef.current = new AudioContext()
-      const source = audioContextRef.current.createMediaStreamSource(stream)
-      processorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1)
+      startVisualization(stream)
+      
+      mediaRecorderRef.current = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      })
 
-      source.connect(processorRef.current)
-      processorRef.current.connect(audioContextRef.current.destination)
+      audioChunksRef.current = []
 
-      processorRef.current.onaudioprocess = (e) => {
-        const inputData = e.inputBuffer.getChannelData(0)
-        audioChunksRef.current.push(new Float32Array(inputData))
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
       }
 
+      mediaRecorderRef.current.onstop = () => {
+        sendAudioToServer()
+      }
+
+      mediaRecorderRef.current.start(1000)
       setIsRecording(true)
     } catch (err) {
       console.error('Error starting recording:', err)
@@ -131,36 +244,31 @@ export default function SystemAudioTranscription() {
   }
 
   const stopRecording = () => {
-    if (processorRef.current) {
-      processorRef.current.disconnect()
-      processorRef.current = null
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
+    }
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
     }
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach(track => track.stop())
     }
-    if (audioContextRef.current) {
-      audioContextRef.current.close()
-    }
     setIsRecording(false)
-    sendAudioToServer()
+
+    // Clear canvas
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d')!
+      ctx.fillStyle = 'rgb(20, 20, 20)'
+      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+    }
   }
 
   const sendAudioToServer = async () => {
     if (audioChunksRef.current.length === 0) return
 
-    const sampleRate = audioContextRef.current?.sampleRate || 44100
-    const bufferLength = audioChunksRef.current.reduce((acc, chunk) => acc + chunk.length, 0)
-    const audioBuffer = new Float32Array(bufferLength)
-    let offset = 0
-    for (const chunk of audioChunksRef.current) {
-      audioBuffer.set(chunk, offset)
-      offset += chunk.length
-    }
-
-    const wavBuffer = createWavFile(audioBuffer, sampleRate)
-    const audioBlob = new Blob([wavBuffer], { type: 'audio/wav' })
+    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
     const formData = new FormData()
-    formData.append('audio', audioBlob, 'audio.wav')
+    formData.append('audio', audioBlob, 'audio.webm')
 
     try {
       const response = await fetch('/api/transcribe', {
@@ -183,123 +291,111 @@ export default function SystemAudioTranscription() {
     audioChunksRef.current = []
   }
 
-  const createWavFile = (audioBuffer: Float32Array, sampleRate: number) => {
-    const buffer = new ArrayBuffer(44 + audioBuffer.length * 2)
-    const view = new DataView(buffer)
-
-    // Write WAV header
-    writeString(view, 0, 'RIFF')
-    view.setUint32(4, 36 + audioBuffer.length * 2, true)
-    writeString(view, 8, 'WAVE')
-    writeString(view, 12, 'fmt ')
-    view.setUint32(16, 16, true)
-    view.setUint16(20, 1, true)
-    view.setUint16(22, 1, true)
-    view.setUint32(24, sampleRate, true)
-    view.setUint32(28, sampleRate * 2, true)
-    view.setUint16(32, 2, true)
-    view.setUint16(34, 16, true)
-    writeString(view, 36, 'data')
-    view.setUint32(40, audioBuffer.length * 2, true)
-
-    const volume = 1
-    let index = 44
-    for (let i = 0; i < audioBuffer.length; i++) {
-      view.setInt16(index, audioBuffer[i] * (0x7FFF * volume), true)
-      index += 2
-    }
-
-    return buffer
-  }
-
-  const writeString = (view: DataView, offset: number, string: string) => {
-    for (let i = 0; i < string.length; i++) {
-      view.setUint8(offset + i, string.charCodeAt(i))
-    }
-  }
-
   return (
     <div className="p-4 max-w-3xl mx-auto">
-    <h1 className="text-2xl font-bold mb-4">Enhanced Audio Transcription</h1>
-    
-    <div className="flex gap-4 mb-4">
-      <Select 
-        value={audioSource}
-        onValueChange={(value: 'microphone' | 'system' | 'both') => setAudioSource(value)}
-        disabled={isRecording}
-      >
-        <SelectTrigger className="w-[200px]">
-          <SelectValue placeholder="Select audio source" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="microphone">Microphone Only</SelectItem>
-          <SelectItem value="system">System Audio Only</SelectItem>
-          <SelectItem value="both">Both System & Microphone</SelectItem>
-        </SelectContent>
-      </Select>
+      <h1 className="text-2xl font-bold mb-4">Enhanced Audio Transcription</h1>
+      
+      <div className="flex gap-4 mb-4">
+        <Select 
+          value={audioSource}
+          onValueChange={(value: 'microphone' | 'system' | 'both') => setAudioSource(value)}
+          disabled={isRecording}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select audio source" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="microphone">Microphone Only</SelectItem>
+            <SelectItem value="system">System Audio Only</SelectItem>
+            <SelectItem value="both">Both System & Microphone</SelectItem>
+          </SelectContent>
+        </Select>
 
-      <Button
-        onClick={isRecording ? stopRecording : startRecording}
-        className={`${isRecording ? 'bg-red-500 hover:bg-red-600' : ' '}`}
-      >
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
-      </Button>
-    </div>
+        <Select 
+          value={visualizerType}
+          onValueChange={(value: 'waveform' | 'bars') => setVisualizerType(value)}
+          disabled={isRecording}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select visualizer type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="waveform">Waveform</SelectItem>
+            <SelectItem value="bars">Frequency Bars</SelectItem>
+          </SelectContent>
+        </Select>
 
-    {error && (
-      <Alert variant={error.includes('Copied') ? 'default' : 'destructive'} className="mb-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>{error.includes('Copied') ? 'Success' : 'Error'}</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    )}
+        <Button
+          onClick={isRecording ? stopRecording : startRecording}
+          className={`${isRecording ? 'bg-red-500 hover:bg-red-600' : ''}`}
+        >
+          {isRecording ? 'Stop Recording' : 'Start Recording'}
+        </Button>
+      </div>
 
-    <div className="mb-4">
-      <h2 className="text-lg font-semibold mb-2">Current Transcript</h2>
-      <div className="flex gap-2 mb-2">
-        <Input
-          placeholder="Enter title to save transcript"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="flex-1"
+      <div className="mb-4 bg-black rounded-lg overflow-hidden">
+        <canvas 
+          ref={canvasRef}
+          width={800}
+          height={200}
+          className="w-full"
         />
-        <Button onClick={handleSaveTranscript} disabled={!transcript}>
-          <Save className="w-4 h-4 mr-2" />
-          Save
-        </Button>
-        <Button onClick={handleCopyTranscript} disabled={!transcript}>
-          <Copy className="w-4 h-4 mr-2" />
-          Copy
-        </Button>
-        <Button onClick={handleDownloadTranscript} disabled={!transcript}>
-          <Download className="w-4 h-4 mr-2" />
-          Download
-        </Button>
       </div>
-      <div 
-        className="p-4 rounded-lg min-h-[200px] whitespace-pre-wrap border"
-        aria-live="polite"
-      >
-        {transcript || 'Transcript will appear here...'}
-      </div>
-    </div>
 
-    {savedTranscripts.length > 0 && (
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Saved Transcripts</h2>
-        <div className="space-y-2">
-          {savedTranscripts.map((saved, index) => (
-            <div key={index} className="border rounded-lg p-4">
-              <div className="flex justify-between mb-2">
-                <h3 className="font-medium">{saved.title}</h3>
-                <span className="text-sm text-gray-500">{saved.date}</span>
-              </div>
-              <p className="text-sm text-gray-600">{saved.text.slice(0, 100)}...</p>
-            </div>
-          ))}
+      {error && (
+        <Alert variant={error.includes('Copied') ? 'default' : 'destructive'} className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{error.includes('Copied') ? 'Success' : 'Error'}</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold mb-2">Current Transcript</h2>
+        <div className="flex flex-col md:flex-row gap-2 mb-2">
+          <Input
+            placeholder="Enter title to save transcript"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="flex-1"
+          />
+          <Button onClick={handleSaveTranscript} disabled={!transcript}>
+            <Save className="w-4 h-4 mr-2" />
+            Save
+          </Button>
+          <Button onClick={handleCopyTranscript} disabled={!transcript}>
+            <Copy className="w-4 h-4 mr-2" />
+            Copy
+          </Button>
+          <Button onClick={handleDownloadTranscript} disabled={!transcript}>
+            <Download className="w-4 h-4 mr-2" />
+            Download
+          </Button>
+        </div>
+        <div 
+          className="p-4 rounded-lg min-h-[200px] whitespace-pre-wrap border"
+          aria-live="polite"
+        >
+          {transcript || 'Transcript will appear here...'}
         </div>
       </div>
-    )}
-  </div>
+
+      {savedTranscripts.length > 0 && (
+        <div>
+          <h2 className="text-lg font-semibold mb-2">Saved Transcripts</h2>
+          <div className="space-y-2">
+            {savedTranscripts.map((saved, index) => (
+              <div key={index} className="border rounded-lg p-4">
+                <div className="flex justify-between mb-2">
+                  <h3 className="font-medium">{saved.title}</h3>
+                  <span className="text-sm text-gray-500">{saved.date}</span>
+                </div>
+                <p className="text-sm text-gray-600">{saved.text.slice(0, 100)}...</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
