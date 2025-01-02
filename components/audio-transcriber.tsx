@@ -22,7 +22,28 @@ export default function SystemAudioTranscription() {
   const [title, setTitle] = useState('')
   const [savedTranscripts, setSavedTranscripts] = useState<Array<{title: string, text: string, date: string}>>([])
   const [visualizerType, setVisualizerType] = useState<'waveform' | 'bars'>('waveform')
-
+  const checkBrowserCompatibility = () => {
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isIOS) {
+      setError('System audio capture is not supported on iOS devices. Please use microphone only.');
+      return false;
+    }
+    
+    if (isSafari) {
+      setError('System audio capture may be limited in Safari. For best results, use Chrome or Firefox.');
+      return false;
+    }
+    
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      setError('Your browser does not support system audio capture. Please use microphone only.');
+      return false;
+    }
+    
+    return true;
+  };
+  
   const handleCopyTranscript = () => {
     navigator.clipboard.writeText(transcript)
       .then(() => {
@@ -190,59 +211,186 @@ export default function SystemAudioTranscription() {
 
   const getSystemAudioStream = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      return stream
+      // @ts-ignore - TypeScript doesn't fully recognize getDisplayMedia options
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+        },
+        video: true // We only want audio, but some browsers require this
+      });
+  
+      // Check if we got an audio track
+      const audioTrack = stream.getAudioTracks()[0];
+      if (!audioTrack) {
+        throw new Error('No audio track available in the captured stream');
+      }
+  
+      // Create a new stream with only the audio track
+      const audioStream = new MediaStream([audioTrack]);
+  
+      // Stop the video track if it exists
+      stream.getVideoTracks().forEach(track => track.stop());
+  
+      return audioStream;
     } catch (err) {
-      console.error('System audio access error:', err)
-      throw new Error('System audio access denied')
+      console.error('System audio access error:', err);
+      if (err instanceof Error && err.name === 'NotAllowedError') {
+        throw new Error('System audio access was denied. Please grant screen sharing permissions.');
+      }
+      throw new Error('Failed to capture system audio. Please try again.');
     }
+  };
+const getSupportedMimeType = () => {
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/mp4',
+      'audio/mpeg',
+      'audio/wav',
+      ''  // Empty string is a last resort fallback
+    ]
+    
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type
+      }
+    }
+    
+    return ''
   }
 
   const startRecording = async () => {
     try {
-      setError(null)
-      let stream: MediaStream | null = null
-
-      if (audioSource === 'microphone') {
-        stream = await getMicrophoneStream()
-      } else if (audioSource === 'system') {
-        stream = await getSystemAudioStream()
-      } else if (audioSource === 'both') {
-        stream = await getMicrophoneStream()
-      }
-
-      if (!stream) {
-        throw new Error('Failed to get audio stream')
-      }
-
-      mediaStreamRef.current = stream
-      startVisualization(stream)
-      
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      })
-
-      audioChunksRef.current = []
-
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data)
+      setError(null);
+      let stream: MediaStream | null = null;
+  
+      // First do browser compatibility check for system audio if needed
+      if ((audioSource === 'system' || audioSource === 'both') && !checkBrowserCompatibility()) {
+        if (audioSource === 'both') {
+          // Fall back to microphone only for 'both' option
+         setAudioSource('microphone');
+        } else {
+          return; // Don't proceed if system audio was specifically requested
         }
       }
-
-      mediaRecorderRef.current.onstop = () => {
-        sendAudioToServer()
+  
+      // Get the appropriate stream based on audio source
+      try {
+        switch (audioSource) {
+          case 'microphone':
+            stream = await getMicrophoneStream();
+            break;
+          case 'system':
+            stream = await getSystemAudioStream();
+            break;
+          case 'both':
+            // Get both streams and combine them
+            const [micStream, sysStream] = await Promise.all([
+              getMicrophoneStream(),
+              getSystemAudioStream()
+            ]);
+            
+            // Combine the audio tracks from both streams
+            const combinedTracks = [
+              ...micStream.getAudioTracks(),
+              ...sysStream.getAudioTracks()
+            ];
+            
+            stream = new MediaStream(combinedTracks);
+            break;
+        }
+      } catch (streamError) {
+        console.error('Stream error:', streamError);
+        throw new Error(
+          streamError instanceof Error 
+            ? streamError.message 
+            : 'Failed to access audio stream'
+        );
       }
-
-      mediaRecorderRef.current.start(1000)
-      setIsRecording(true)
+  
+      if (!stream || !stream.getAudioTracks().length) {
+        throw new Error('No audio tracks available in the stream');
+      }
+  
+      // Store the stream reference
+      mediaStreamRef.current = stream;
+  
+      // Start audio visualization
+      try {
+        startVisualization(stream);
+      } catch (visualError) {
+        console.warn('Visualization error:', visualError);
+        // Don't throw - visualization is not critical
+      }
+  
+      // Get supported MIME type
+      const mimeType = getSupportedMimeType();
+      const mediaRecorderOptions: MediaRecorderOptions = {};
+      
+      if (mimeType) {
+        mediaRecorderOptions.mimeType = mimeType;
+      }
+  
+      // Try to create MediaRecorder with options first
+      try {
+        mediaRecorderRef.current = new MediaRecorder(stream, mediaRecorderOptions);
+      } catch (recorderError) {
+        console.warn('MediaRecorder creation failed with mime type, trying without options');
+        try {
+          // Fallback to basic initialization
+          mediaRecorderRef.current = new MediaRecorder(stream);
+        } catch (fallbackError) {
+          throw new Error('Failed to create MediaRecorder with the available audio stream');
+        }
+      }
+  
+      // Initialize recording
+      audioChunksRef.current = [];
+  
+      // Set up MediaRecorder event handlers
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+  
+      mediaRecorderRef.current.onerror = (event) => {
+        console.error('MediaRecorder error:', event);
+        stopRecording();
+        setError('Recording error occurred. Please try again.');
+      };
+  
+      mediaRecorderRef.current.onstop = () => {
+        sendAudioToServer();
+      };
+  
+      // Start recording
+      try {
+        mediaRecorderRef.current.start(1000); // Collect data every second
+        setIsRecording(true);
+      } catch (startError) {
+        throw new Error('Failed to start recording: ' + 
+          (startError instanceof Error ? startError.message : 'unknown error'));
+      }
+  
     } catch (err) {
-      console.error('Error starting recording:', err)
-      setError('Failed to start recording. Please make sure you have granted the necessary permissions.')
-      setIsRecording(false)
+      console.error('Recording error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to start recording');
+      setIsRecording(false);
+      
+      // Cleanup any partial setup
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      }
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current = null;
+      }
     }
-  }
-
+  };
   const stopRecording = () => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current)
@@ -266,9 +414,10 @@ export default function SystemAudioTranscription() {
   const sendAudioToServer = async () => {
     if (audioChunksRef.current.length === 0) return
 
-    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+    const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm'
+    const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
     const formData = new FormData()
-    formData.append('audio', audioBlob, 'audio.webm')
+    formData.append('audio', audioBlob, `audio.${mimeType.split('/')[1].split(';')[0]}`)
 
     try {
       const response = await fetch('/api/transcribe', {
@@ -290,7 +439,6 @@ export default function SystemAudioTranscription() {
 
     audioChunksRef.current = []
   }
-
   return (
     <div className="p-4 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Enhanced Audio Transcription</h1>
