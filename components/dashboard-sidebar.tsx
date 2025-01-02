@@ -1,5 +1,5 @@
 'use client'
-import { BarChart2, BotIcon, Brain, Calendar, CoinsIcon, FileType2Icon, Home, Inbox, LifeBuoyIcon, LucideIcon, MessageSquareQuote, Search, Settings, SparklesIcon } from "lucide-react"
+import { AudioWaveformIcon, BarChart2, BotIcon, Brain, Calendar, CoinsIcon, FileType2Icon, Home, Inbox, LifeBuoyIcon, LucideIcon, MessageSquareQuote, Search, Settings, SparklesIcon } from "lucide-react"
 import { IconFileTypePdf } from '@tabler/icons-react';
 import {
   Sidebar,
@@ -19,7 +19,6 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { checkUserAccess } from "@/lib/check-access"
-import { BorderBeam } from "./ui/border-beam"
 
 // Menu items.
 const adminItems = [
@@ -43,7 +42,11 @@ const adminItems = [
       href:'/dashboard/quiz/generated-questions',
       icon:IconFileTypePdf as LucideIcon
     },
-    
+    {
+      title:'Transcripts',
+      href:'/dashboard/audio',
+      icon: AudioWaveformIcon
+    },
     {
       title: "Analytics",
       href: "/dashboard/analytics",
@@ -91,6 +94,11 @@ const adminItems = [
       title:'Generated Quizzes',
       href:'/dashboard/quiz/generated-questions',
       icon:IconFileTypePdf
+    },
+    {
+      title:'Transcripts',
+      href:'/dashboard/audio',
+      icon: AudioWaveformIcon
     },
     {
       title: "Analytics",
